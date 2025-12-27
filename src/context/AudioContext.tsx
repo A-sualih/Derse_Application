@@ -14,12 +14,14 @@ interface AudioContextType {
     currentFileId: string | null;
     position: number;
     duration: number;
+    playbackRate: number;
     playSound: (uri: string, title?: string, queue?: DriveFile[], fileId?: string) => Promise<void>;
     pauseSound: (savePosition?: boolean) => Promise<void>;
     seekScroll: (value: number) => Promise<void>;
     skip: (seconds: number) => Promise<void>;
     nextTrack: () => void;
     previousTrack: () => void;
+    setPlaybackRate: (rate: number) => Promise<void>;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const player = useAudioPlayer(currentUri);
     const status = useAudioPlayerStatus(player);
     const [isLoading, setIsLoading] = useState(false);
+    const [playbackRate, setPlaybackRateState] = useState(1.0);
     const positionSaveInterval = useRef<any>(null);
     const pendingSeekPosition = useRef<number | null>(null);
     const shouldAutoPlay = useRef(false);
@@ -49,7 +52,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, [status.playing, isLoading]);
 
     useEffect(() => {
-        // Configure audio mode for background playback
+        // Configure audio mode for background playback and load saved playback rate
         const setupAudio = async () => {
             try {
                 await setAudioModeAsync({
@@ -60,6 +63,13 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                     interruptionMode: (ExpoAV as any).INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
                 });
                 console.log('Audio mode configured for background playback');
+
+                // Load saved playback rate
+                const savedRate = await AsyncStorage.getItem('playback_rate');
+                if (savedRate) {
+                    const rate = parseFloat(savedRate);
+                    setPlaybackRateState(rate);
+                }
             } catch (error) {
                 console.error('Error setting audio mode:', error);
             }
@@ -270,11 +280,28 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     };
 
+    const setPlaybackRate = async (rate: number) => {
+        try {
+            setPlaybackRateState(rate);
+            player.setPlaybackRate(rate);
+            await AsyncStorage.setItem('playback_rate', rate.toString());
+            console.log('Playback rate set to:', rate);
+        } catch (error) {
+            console.error('Error setting playback rate:', error);
+        }
+    };
+
+    // Apply playback rate when player is ready
+    useEffect(() => {
+        if (currentUri && status.duration > 0 && playbackRate !== 1.0) {
+            player.setPlaybackRate(playbackRate);
+        }
+    }, [currentUri, status.duration, playbackRate, player]);
 
     return (
         <AudioContext.Provider value={{
             isPlaying, isLoading, currentUri, currentTitle, currentFileId, position, duration,
-            playSound, pauseSound, seekScroll, skip, nextTrack, previousTrack
+            playbackRate, playSound, pauseSound, seekScroll, skip, nextTrack, previousTrack, setPlaybackRate
         }}>
             {children}
         </AudioContext.Provider>

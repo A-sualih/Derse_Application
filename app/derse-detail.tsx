@@ -5,7 +5,6 @@ import { useTheme } from '@/src/context/ThemeContext';
 import { useAudioPlayer } from '@/src/hooks/useAudioPlayer';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,11 +24,22 @@ export default function DerseDetailScreen() {
         currentUri,
         isLoading,
         position,
-        duration
+        duration,
+        playbackRate,
+        setPlaybackRate
     } = useAudioPlayer();
 
     const toggleTheme = () => {
         setThemePreference(colorScheme === 'dark' ? 'light' : 'dark');
+    };
+
+    // Available playback speeds
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+    const handleSpeedCycle = () => {
+        const currentIndex = speeds.indexOf(playbackRate);
+        const nextIndex = (currentIndex + 1) % speeds.length;
+        setPlaybackRate(speeds[nextIndex]);
     };
 
     if (!category) {
@@ -109,6 +119,20 @@ const styles = StyleSheet.create({
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 8,
+    },
+    speedBtn: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+        minWidth: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    speedText: {
+        fontSize: 13,
+        fontWeight: 'bold',
     },
     themeToggle: {
         padding: 8,

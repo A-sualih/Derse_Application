@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAudio } from '@/src/context/AudioContext';
 import { useFileDownloader } from '@/src/hooks/useFileDownloader';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
@@ -35,6 +36,16 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     const theme = Colors[colorScheme];
     const { downloaded, loading, download, remove, localUri } = useFileDownloader(file.name, file.url);
     const router = useRouter();
+    const { playbackRate, setPlaybackRate } = useAudio();
+
+    // Available playback speeds
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+    const handleSpeedCycle = () => {
+        const currentIndex = speeds.indexOf(playbackRate);
+        const nextIndex = (currentIndex + 1) % speeds.length;
+        setPlaybackRate(speeds[nextIndex]);
+    };
 
     const handleOpenPdf = async () => {
         if (localUri && downloaded) {
@@ -48,15 +59,14 @@ export const FileListItem: React.FC<FileListItemProps> = ({
                 pathname: '/pdf-viewer',
                 params: {
                     url: localUri,
-                    remoteUrl: file.url,
-                    name: file.name
-                }
+                    name: file.name,
+                },
             });
         }
     };
 
     const handleAudioPress = () => {
-        if (!localUri) return;
+        if (!localUri || !downloaded) return;
 
         if (isCurrent && isPlaying && onPause) {
             onPause();
@@ -94,17 +104,26 @@ export const FileListItem: React.FC<FileListItemProps> = ({
         return (
             <View style={styles.actions}>
                 {file.type === 'audio' ? (
-                    <TouchableOpacity onPress={handleAudioPress} style={styles.actionButton}>
-                        {isAudioLoading && isCurrent ? (
-                            <ActivityIndicator size="small" color={theme.tint} />
-                        ) : (
-                            <Ionicons
-                                name={isCurrent && isPlaying ? "pause-circle" : "play-circle"}
-                                size={40}
-                                color={theme.tint}
-                            />
+                    <>
+                        <TouchableOpacity onPress={handleAudioPress} style={styles.actionButton}>
+                            {isAudioLoading && isCurrent ? (
+                                <ActivityIndicator size="small" color={theme.tint} />
+                            ) : (
+                                <Ionicons
+                                    name={isCurrent && isPlaying ? "pause-circle" : "play-circle"}
+                                    size={40}
+                                    color={theme.tint}
+                                />
+                            )}
+                        </TouchableOpacity>
+                        {isCurrent && (
+                            <TouchableOpacity onPress={handleSpeedCycle} style={styles.speedButton}>
+                                <Text style={[styles.speedButtonText, { color: theme.tint }]}>
+                                    {playbackRate}x
+                                </Text>
+                            </TouchableOpacity>
                         )}
-                    </TouchableOpacity>
+                    </>
                 ) : (
                     <TouchableOpacity onPress={handleOpenPdf} style={styles.actionButton}>
                         <Ionicons name="document-text-outline" size={32} color={theme.tint} />
@@ -154,19 +173,19 @@ export const FileListItem: React.FC<FileListItemProps> = ({
                                 value={position}
                                 onSlidingComplete={onSeek}
                                 minimumTrackTintColor="#007AFF"
-                                maximumTrackTintColor="#D1D1D1"
+                                maximumTrackTintColor="#ccc"
                                 thumbTintColor="#007AFF"
                             />
+                            <View style={styles.timeLabels}>
+                                <Text style={styles.timeText}>{formatTime(position)}</Text>
+                                <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                            </View>
                         </View>
 
                         <TouchableOpacity onPress={() => onSeek && onSeek(Math.min(duration, position + 10000))} style={styles.controlBtn}>
                             <Ionicons name="refresh-outline" size={24} color="#007AFF" style={{ transform: [{ scaleX: -1 }] }} />
                             <Text style={styles.controlText}>+10s</Text>
                         </TouchableOpacity>
-                    </View>
-                    <View style={styles.timeLabels}>
-                        <Text style={styles.timeText}>{formatTime(position)}</Text>
-                        <Text style={styles.timeText}>{formatTime(duration)}</Text>
                     </View>
                 </View>
             )}
@@ -220,6 +239,20 @@ const styles = StyleSheet.create({
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    speedButton: {
+        marginLeft: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+        minWidth: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    speedButtonText: {
+        fontSize: 13,
+        fontWeight: 'bold',
     },
     progressContainer: {
         paddingHorizontal: 16,

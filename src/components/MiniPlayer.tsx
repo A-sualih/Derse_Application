@@ -15,12 +15,14 @@ export const MiniPlayer: React.FC = () => {
         isLoading,
         position,
         duration,
+        playbackRate,
         playSound,
         pauseSound,
         seekScroll,
         skip,
         nextTrack,
-        previousTrack
+        previousTrack,
+        setPlaybackRate
     } = useAudio();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
@@ -33,6 +35,15 @@ export const MiniPlayer: React.FC = () => {
 
     // Use title from context, or fallback to "Audio"
     const trackName = currentTitle || 'Audio';
+
+    // Available playback speeds
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+    const handleSpeedCycle = () => {
+        const currentIndex = speeds.indexOf(playbackRate);
+        const nextIndex = (currentIndex + 1) % speeds.length;
+        setPlaybackRate(speeds[nextIndex]);
+    };
 
     const handlePlayPause = () => {
         if (isPlaying) {
@@ -48,6 +59,11 @@ export const MiniPlayer: React.FC = () => {
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: colorScheme === 'dark' ? '#000' : '#fff' }]} numberOfLines={1}>{trackName}</Text>
                     <View style={styles.headerButtons}>
+                        <TouchableOpacity onPress={handleSpeedCycle} style={styles.speedBtn}>
+                            <Text style={[styles.speedText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+                                {playbackRate}x
+                            </Text>
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => setShowTrackList(true)} style={styles.iconBtn}>
                             <Ionicons name="list" size={24} color={colorScheme === 'dark' ? '#000' : '#fff'} />
                         </TouchableOpacity>
@@ -229,5 +245,18 @@ const styles = StyleSheet.create({
     },
     trackName: {
         fontSize: 16,
+    },
+    speedBtn: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        minWidth: 45,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    speedText: {
+        fontSize: 13,
+        fontWeight: 'bold',
     },
 });

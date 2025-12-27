@@ -7,7 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface NativePdfProps {
     url: string;
-    remoteUrl?: string; // Not strictly needed now but kept for compatibility
+    remoteUrl?: string;
     targetPage?: number;
     zoom?: number;
     onPageChanged?: (page: number) => void;
@@ -16,96 +16,169 @@ interface NativePdfProps {
 const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, zoom = 1.0, onPageChanged }) => {
     const webViewRef = useRef<WebView>(null);
     const colorScheme = useColorScheme() ?? 'light';
-    const [base64, setBase64] = useState<string | null>(null);
-    const [isReading, setIsReading] = useState(Platform.OS === 'android');
+    const [base64Data, setBase64Data] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(Platform.OS === 'android');
 
+    // Load PDF as base64 for Android
     useEffect(() => {
-        const loadPdf = async () => {
+        const loadPdfData = async () => {
             if (Platform.OS !== 'android') {
-                setIsReading(false);
+                setIsLoading(false);
                 return;
             }
 
             try {
-                // For Android, base64 is often required to bypass security restrictions on file:/// inside a string-based WebView.
                 const content = await FileSystem.readAsStringAsync(url, {
                     encoding: FileSystem.EncodingType.Base64
                 });
-                setBase64(content);
+                setBase64Data(content);
             } catch (e) {
-                console.error('Error loading PDF as base64:', e);
+                console.error('Error loading PDF:', e);
             } finally {
-                setIsReading(false);
+                setIsLoading(false);
             }
         };
-        loadPdf();
+        loadPdfData();
     }, [url]);
 
+    // Inject base64 data once ready
+    useEffect(() => {
+        if (base64Data && !isLoading && webViewRef.current && Platform.OS === 'android') {
+            setTimeout(() => {
+                webViewRef.current?.injectJavaScript(`
+                    if (typeof loadPdfFromBase64 !== "undefined") {
+                        loadPdfFromBase64("${base64Data}");
+                    }
+                `);
+            }, 500);
+        }
+    }, [base64Data, isLoading]);
+
+    // Apply zoom when it changes
+    useEffect(() => {
+        if (webViewRef.current) {
+            setTimeout(() => {
+                webViewRef.current?.injectJavaScript(`
+                    if (typeof applyZoom !== "undefined") {
+                        applyZoom(${zoom});
+                    }
+                `);
+            }, 300);
+        }
+    }, [zoom]);
 
     const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
             <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
             <style>
-                body { margin: 0; padding: 0; background: ${colorScheme === 'dark' ? '#151718' : '#525659'}; overflow-x: auto; -webkit-tap-highlight-color: transparent; }
-                #viewer { display: flex; flex-direction: column; align-items: center; }
-                .page-container { margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); background: white; width: 100vw; display: flex; justify-content: center; position: relative; }
-                canvas { max-width: 100%; height: auto !important; display: block; }
-                #loading { color: white; text-align: center; padding: 40px; font-family: sans-serif; font-size: 18px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; }
-                .page-label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-family: sans-serif; pointer-events: none; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    background: ${colorScheme === 'dark' ? '#151718' : '#525659'}; 
+                    overflow-x: hidden;
+                }
+                #viewer { 
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center;
+                }
+                .page-container { 
+                    margin-bottom: 20px; 
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+                    background: white; 
+                    width: 100vw; 
+                    display: flex; 
+                    justify-content: center; 
+                    position: relative;
+                }
+                canvas { 
+                    max-width: 100%; 
+                    height: auto !important; 
+                    display: block;
+                }
+                #loading { 
+                    color: white; 
+                    text-align: center; 
+                    padding: 40px; 
+                    font-family: sans-serif; 
+                    font-size: 18px;
+                }
+                .page-label { 
+                    position: absolute; 
+                    top: 10px; 
+                    left: 10px; 
+                    background: rgba(0,0,0,0.5); 
+                    color: white; 
+                    padding: 2px 8px; 
+                    border-radius: 4px; 
+                    font-size: 12px; 
+                    font-family: sans-serif;
+                }
             </style>
         </head>
         <body>
-            <div id="loading" style="display: none;">Initial loading...</div>
+            <div id="loading">Loading PDF...</div>
             <div id="viewer"></div>
             <script>
-                const initialUrl = "${url}";
+                const pdfUrl = "${url}";
                 const targetPage = ${targetPage};
-                const zoomLevel = ${zoom};
                 const isDark = ${colorScheme === 'dark'};
+                const isAndroid = ${Platform.OS === 'android'};
                 
                 let pdfDoc = null;
+                let baseScale = 1.0;
                 let pageHeight = 0;
                 let pageTotalHeight = 0;
-                let scale = 1.0;
                 let renderedPages = new Set();
-                let observer = null;
 
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-                async function startRendering(data, url) {
-                    if (pdfDoc) return;
+                function convertBase64ToUint8Array(base64) {
+                    const binaryString = atob(base64);
+                    const len = binaryString.length;
+                    const bytes = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    return bytes;
+                }
+
+                async function loadPdfFromBase64(base64) {
                     try {
-                        const loadingTask = data 
-                            ? pdfjsLib.getDocument({ data: convertData(data) })
-                            : pdfjsLib.getDocument(url);
-                        
+                        const pdfData = convertBase64ToUint8Array(base64);
+                        const loadingTask = pdfjsLib.getDocument({ data: pdfData });
                         pdfDoc = await loadingTask.promise;
+                        document.getElementById('loading').style.display = 'none';
                         await setupViewer();
                     } catch (e) {
-                        console.error('PDF.js loading error:', e);
+                        console.error('PDF loading error:', e);
+                        document.getElementById('loading').innerText = 'Error: ' + e.message;
                     }
                 }
 
-                function convertData(base64) {
-                    const bytes = atob(base64);
-                    const arr = new Uint8Array(bytes.length);
-                    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-                    return arr;
+                async function loadPdfFromUrl() {
+                    try {
+                        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                        pdfDoc = await loadingTask.promise;
+                        document.getElementById('loading').style.display = 'none';
+                        await setupViewer();
+                    } catch (e) {
+                        console.error('PDF loading error:', e);
+                        document.getElementById('loading').innerText = 'Error: ' + e.message;
+                    }
                 }
 
                 async function setupViewer() {
                     const viewer = document.getElementById('viewer');
                     const firstPage = await pdfDoc.getPage(1);
                     const unscaledViewport = firstPage.getViewport({ scale: 1.0 });
-                    const baseScale = window.innerWidth / unscaledViewport.width;
-                    scale = baseScale * zoomLevel;
+                    baseScale = window.innerWidth / unscaledViewport.width;
+                    const scale = baseScale;
                     pageHeight = unscaledViewport.height * scale;
                     pageTotalHeight = pageHeight + 20;
 
-                    // Create light placeholders for all pages
                     for (let i = 1; i <= pdfDoc.numPages; i++) {
                         const container = document.createElement('div');
                         container.className = 'page-container';
@@ -113,7 +186,6 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                         container.id = 'page-' + i;
                         if (isDark) container.style.background = '#1a1a1b';
                         
-                        // Add page number label for UX
                         const label = document.createElement('div');
                         label.className = 'page-label';
                         label.innerText = 'Page ' + i;
@@ -122,23 +194,20 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                         viewer.appendChild(container);
                     }
 
-                    // Setup Intersection Observer for lazy rendering
-                    observer = new IntersectionObserver((entries) => {
+                    const observer = new IntersectionObserver((entries) => {
                         entries.forEach(entry => {
                             if (entry.isIntersecting) {
                                 const pageNum = parseInt(entry.target.id.split('-')[1]);
                                 renderPage(pageNum);
                             }
                         });
-                    }, { rootMargin: '500px' }); // Load pages 500px before they come into view
+                    }, { rootMargin: '500px' });
 
                     document.querySelectorAll('.page-container').forEach(el => observer.observe(el));
 
-                    // Immediate Jump to target
                     const targetY = (targetPage - 1) * pageTotalHeight;
                     window.scrollTo(0, targetY);
 
-                    // Message back on scroll for persistence
                     let lastSentPage = targetPage;
                     window.addEventListener('scroll', () => {
                         const pageIndex = Math.floor((window.scrollY + window.innerHeight/4) / pageTotalHeight) + 1;
@@ -149,7 +218,6 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                         }
                     }, { passive: true });
                     
-                    // Priority render target page
                     renderPage(targetPage);
                 }
 
@@ -159,6 +227,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     
                     try {
                         const page = await pdfDoc.getPage(pageNum);
+                        const scale = baseScale;
                         const viewport = page.getViewport({ scale: scale });
                         const canvas = document.createElement('canvas');
                         canvas.height = viewport.height;
@@ -174,8 +243,16 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     }
                 }
 
-                // For Android: Wait for base64 injection from React Native
-                // The base64 data will be injected via the useEffect below
+                // Simple zoom using CSS transform
+                window.applyZoom = function(zoomLevel) {
+                    const viewer = document.getElementById('viewer');
+                    viewer.style.transform = 'scale(' + zoomLevel + ')';
+                    viewer.style.transformOrigin = 'top center';
+                };
+
+                if (!isAndroid) {
+                    loadPdfFromUrl();
+                }
             </script>
         </body>
         </html>
@@ -189,15 +266,6 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
             }
         } catch (e) { }
     };
-
-    useEffect(() => {
-        if (base64 && !isReading && webViewRef.current && Platform.OS !== 'ios') {
-            // Small delay to ensure WebView is ready
-            setTimeout(() => {
-                webViewRef.current?.injectJavaScript(`if(typeof startRendering !== "undefined") startRendering("${base64}", "");`);
-            }, 100);
-        }
-    }, [base64, isReading]);
 
     if (Platform.OS === 'ios') {
         return (
@@ -224,7 +292,6 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 allowUniversalAccessFromFileURLs={true}
                 javaScriptEnabled={true}
                 domStorageEnabled={true}
-                startInLoadingState={false}
             />
         </View>
     );
@@ -236,11 +303,6 @@ const styles = StyleSheet.create({
     },
     webview: {
         flex: 1,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
 });
 
