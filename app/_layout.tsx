@@ -7,7 +7,9 @@ import { useColorScheme } from '../hooks/use-color-scheme';
 import { AudioProvider } from '../src/context/AudioContext';
 import { ThemeProvider as AppThemeProvider } from '../src/context/ThemeContext';
 
+import { NoteProvider } from '../src/context/NoteContext';
 import { UserProvider } from '../src/context/UserContext';
+
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,9 +20,12 @@ export default function RootLayout() {
     <AppThemeProvider>
       <AudioProvider>
         <UserProvider>
-          <LayoutContent />
+          <NoteProvider>
+            <LayoutContent />
+          </NoteProvider>
         </UserProvider>
       </AudioProvider>
+
     </AppThemeProvider>
   );
 }

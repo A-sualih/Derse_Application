@@ -2,7 +2,10 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MiniPlayer } from '@/src/components/MiniPlayer';
 import NativePdf from '@/src/components/NativePdf';
+import { NotesManagerModal } from '@/src/components/NotesManagerModal';
+
 import { Ionicons } from '@expo/vector-icons';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -14,6 +17,8 @@ export default function PdfViewer() {
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [isPageLoaded, setIsPageLoaded] = useState(false);
+    const [notesModalVisible, setNotesModalVisible] = useState(false);
+
 
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
@@ -65,13 +70,28 @@ export default function PdfViewer() {
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity
-                    onPress={() => Linking.openURL(remoteUrl || url)}
-                    style={styles.headerRight}
-                >
-                    <Ionicons name="open-outline" size={24} color={theme.tint} />
-                </TouchableOpacity>
+                <View style={styles.headerRight}>
+                    <TouchableOpacity
+                        onPress={() => setNotesModalVisible(true)}
+                        style={styles.headerBtn}
+                    >
+                        <Ionicons name="document-text-outline" size={24} color={theme.tint} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => Linking.openURL(remoteUrl || url)}
+                        style={styles.headerBtn}
+                    >
+                        <Ionicons name="open-outline" size={24} color={theme.tint} />
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            <NotesManagerModal
+                visible={notesModalVisible}
+                onClose={() => setNotesModalVisible(false)}
+            />
+
 
             <View style={[styles.pdfContainer, { backgroundColor: colorScheme === 'dark' ? '#1a1a1b' : '#F5F5F5' }]}>
                 <NativePdf
@@ -128,9 +148,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     headerRight: {
-        width: 70,
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 15,
+        width: 80,
     },
+    headerBtn: {
+        padding: 4,
+    },
+
     pdfContainer: {
         flex: 1,
         backgroundColor: '#F5F5F5',
