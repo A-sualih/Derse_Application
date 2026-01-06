@@ -44,9 +44,16 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
                 <View style={[styles.noteItem, { backgroundColor: theme.background, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}>
                     <View style={styles.noteContent}>
                         <Text style={[styles.noteText, { color: theme.text }]}>{item.content}</Text>
-                        <Text style={[styles.dateText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
-                            {formatDate(item.createdAt)}
-                        </Text>
+                        <View style={styles.noteMetadata}>
+                            <Text style={[styles.dateText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
+                                {formatDate(item.createdAt)}
+                            </Text>
+                            {item.fileName && (
+                                <Text style={[styles.contextText, { color: theme.tint }]}>
+                                    • {item.fileName}{item.pageNumber ? `, p. ${item.pageNumber}` : ''}
+                                </Text>
+                            )}
+                        </View>
                     </View>
                     <TouchableOpacity
                         onPress={() => onDelete(item.id)}
@@ -85,6 +92,15 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: 12,
+    },
+    noteMetadata: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    contextText: {
+        fontSize: 12,
+        fontWeight: '500',
+        marginLeft: 4,
     },
     deleteButton: {
         padding: 4,

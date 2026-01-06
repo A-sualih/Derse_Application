@@ -10,13 +10,23 @@ import { NoteList } from './NoteList';
 interface NotesManagerModalProps {
     visible: boolean;
     onClose: () => void;
+    currentFileMetadata?: {
+        fileId: string;
+        fileName: string;
+        pageNumber: number;
+    };
 }
 
-export function NotesManagerModal({ visible, onClose }: NotesManagerModalProps) {
+export function NotesManagerModal({ visible, onClose, currentFileMetadata }: NotesManagerModalProps) {
     const { colorScheme } = useTheme();
     const theme = Colors[colorScheme];
     const { notes, addNote, deleteNote } = useNotes();
     const [addModalVisible, setAddModalVisible] = useState(false);
+    const [filterByFile, setFilterByFile] = useState(!!currentFileMetadata);
+
+    const filteredNotes = filterByFile && currentFileMetadata
+        ? notes.filter(n => n.fileId === currentFileMetadata.fileId)
+        : notes;
 
     return (
         <Modal
@@ -27,13 +37,22 @@ export function NotesManagerModal({ visible, onClose }: NotesManagerModalProps) 
         >
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={[styles.header, { borderBottomColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}>
-                    <Text style={[styles.title, { color: theme.text }]}>Notes</Text>
+                    <View>
+                        <Text style={[styles.title, { color: theme.text }]}>Notes</Text>
+                        {currentFileMetadata && (
+                            <TouchableOpacity onPress={() => setFilterByFile(!filterByFile)}>
+                                <Text style={[styles.filterText, { color: theme.tint }]}>
+                                    {filterByFile ? 'Showing this file' : 'Showing all notes'}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                         <Ionicons name="close" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
 
-                <NoteList notes={notes} onDelete={deleteNote} />
+                <NoteList notes={filteredNotes} onDelete={deleteNote} />
 
                 <TouchableOpacity
                     style={[styles.fab, { backgroundColor: theme.tint }]}
@@ -46,6 +65,7 @@ export function NotesManagerModal({ visible, onClose }: NotesManagerModalProps) 
                     visible={addModalVisible}
                     onClose={() => setAddModalVisible(false)}
                     onSave={addNote}
+                    metadata={currentFileMetadata}
                 />
             </SafeAreaView>
         </Modal>
@@ -66,6 +86,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
+    },
+    filterText: {
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 2,
     },
     closeButton: {
         padding: 4,

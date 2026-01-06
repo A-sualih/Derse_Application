@@ -7,17 +7,22 @@ import { useTheme } from '../context/ThemeContext';
 interface AddNoteModalProps {
     visible: boolean;
     onClose: () => void;
-    onSave: (content: string) => void;
+    onSave: (content: string, metadata?: any) => void;
+    metadata?: {
+        fileId?: string;
+        fileName?: string;
+        pageNumber?: number;
+    };
 }
 
-export function AddNoteModal({ visible, onClose, onSave }: AddNoteModalProps) {
+export function AddNoteModal({ visible, onClose, onSave, metadata }: AddNoteModalProps) {
     const [content, setContent] = useState('');
     const { colorScheme } = useTheme();
     const theme = Colors[colorScheme];
 
     const handleSave = () => {
         if (content.trim()) {
-            onSave(content);
+            onSave(content, metadata);
             setContent('');
             onClose();
         }
@@ -41,7 +46,14 @@ export function AddNoteModal({ visible, onClose, onSave }: AddNoteModalProps) {
             >
                 <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
                     <View style={styles.header}>
-                        <Text style={[styles.title, { color: theme.text }]}>New Note</Text>
+                        <View>
+                            <Text style={[styles.title, { color: theme.text }]}>New Note</Text>
+                            {metadata?.fileName && (
+                                <Text style={[styles.subtitle, { color: colorScheme === 'dark' ? '#aaa' : '#666' }]}>
+                                    {metadata.fileName}{metadata.pageNumber ? ` • Page ${metadata.pageNumber}` : ''}
+                                </Text>
+                            )}
+                        </View>
                         <TouchableOpacity onPress={handleClose}>
                             <Ionicons name="close" size={24} color={theme.text} />
                         </TouchableOpacity>
@@ -91,12 +103,16 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         marginBottom: 20,
     },
     title: {
         fontSize: 20,
         fontWeight: 'bold',
+    },
+    subtitle: {
+        fontSize: 13,
+        marginTop: 2,
     },
     input: {
         flex: 1,

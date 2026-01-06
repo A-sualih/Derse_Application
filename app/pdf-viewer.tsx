@@ -90,6 +90,11 @@ export default function PdfViewer() {
             <NotesManagerModal
                 visible={notesModalVisible}
                 onClose={() => setNotesModalVisible(false)}
+                currentFileMetadata={{
+                    fileId: name || (url as string), // Use name as ID or fallback to URL
+                    fileName: name || 'PDF Document',
+                    pageNumber: currentPage
+                }}
             />
 
 
