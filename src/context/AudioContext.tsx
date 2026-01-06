@@ -246,6 +246,8 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     const nextTrack = () => {
         const audioFiles = currentQueue.filter(file => file.type === 'audio');
+        if (audioFiles.length === 0) return;
+
         let currentIndex = -1;
 
         if (currentFileId) {
@@ -256,14 +258,27 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             currentIndex = audioFiles.findIndex(file => file.url === currentUri);
         }
 
+        let nextIndex = 0;
         if (currentIndex !== -1 && currentIndex < audioFiles.length - 1) {
-            const nextFile = audioFiles[currentIndex + 1];
-            playSound(nextFile.url, nextFile.name, currentQueue, nextFile.id);
+            nextIndex = currentIndex + 1;
+        } else if (currentIndex === audioFiles.length - 1) {
+            nextIndex = 0; // Loop back to start
         }
+
+        const nextFile = audioFiles[nextIndex];
+        playSound(nextFile.url, nextFile.name, currentQueue, nextFile.id);
     };
 
     const previousTrack = () => {
+        // If we've played more than 3 seconds, restart the current track instead of going back
+        if (position > 3000) {
+            player.seekTo(0);
+            return;
+        }
+
         const audioFiles = currentQueue.filter(file => file.type === 'audio');
+        if (audioFiles.length === 0) return;
+
         let currentIndex = -1;
 
         if (currentFileId) {
@@ -274,10 +289,15 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             currentIndex = audioFiles.findIndex(file => file.url === currentUri);
         }
 
+        let prevIndex = audioFiles.length - 1;
         if (currentIndex > 0) {
-            const prevFile = audioFiles[currentIndex - 1];
-            playSound(prevFile.url, prevFile.name, currentQueue, prevFile.id);
+            prevIndex = currentIndex - 1;
+        } else if (currentIndex === 0) {
+            prevIndex = audioFiles.length - 1; // Loop to end
         }
+
+        const prevFile = audioFiles[prevIndex];
+        playSound(prevFile.url, prevFile.name, currentQueue, prevFile.id);
     };
 
     const setPlaybackRate = async (rate: number) => {

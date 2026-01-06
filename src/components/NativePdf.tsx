@@ -1,6 +1,5 @@
-import * as FileSystem from 'expo-file-system/legacy';
-import React, { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -16,54 +15,15 @@ interface NativePdfProps {
 const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, zoom = 1.0, onPageChanged }) => {
     const webViewRef = useRef<WebView>(null);
     const colorScheme = useColorScheme() ?? 'light';
-    const [base64Data, setBase64Data] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(Platform.OS === 'android');
-
-    // Load PDF as base64 for Android
-    useEffect(() => {
-        const loadPdfData = async () => {
-            if (Platform.OS !== 'android') {
-                setIsLoading(false);
-                return;
-            }
-
-            try {
-                const content = await FileSystem.readAsStringAsync(url, {
-                    encoding: FileSystem.EncodingType.Base64
-                });
-                setBase64Data(content);
-            } catch (e) {
-                console.error('Error loading PDF:', e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        loadPdfData();
-    }, [url]);
-
-    // Inject base64 data once ready
-    useEffect(() => {
-        if (base64Data && !isLoading && webViewRef.current && Platform.OS === 'android') {
-            setTimeout(() => {
-                webViewRef.current?.injectJavaScript(`
-                    if (typeof loadPdfFromBase64 !== "undefined") {
-                        loadPdfFromBase64("${base64Data}");
-                    }
-                `);
-            }, 500);
-        }
-    }, [base64Data, isLoading]);
 
     // Apply zoom when it changes
     useEffect(() => {
         if (webViewRef.current) {
-            setTimeout(() => {
-                webViewRef.current?.injectJavaScript(`
-                    if (typeof applyZoom !== "undefined") {
-                        applyZoom(${zoom});
-                    }
-                `);
-            }, 300);
+            webViewRef.current?.injectJavaScript(`
+                if (typeof applyZoom !== "undefined") {
+                    applyZoom(${zoom});
+                }
+            `);
         }
     }, [zoom]);
 
@@ -78,11 +38,13 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 body { 
                     background: ${colorScheme === 'dark' ? '#151718' : '#525659'}; 
                     overflow-x: hidden;
+                    font-family: -apple-system, system-ui, sans-serif;
                 }
                 #viewer { 
                     display: flex; 
                     flex-direction: column; 
                     align-items: center;
+                    padding-bottom: 50px;
                 }
                 .page-container { 
                     margin-bottom: 20px; 
@@ -102,7 +64,6 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     color: white; 
                     text-align: center; 
                     padding: 40px; 
-                    font-family: sans-serif; 
                     font-size: 18px;
                 }
                 .page-label { 
@@ -114,7 +75,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     padding: 2px 8px; 
                     border-radius: 4px; 
                     font-size: 12px; 
-                    font-family: sans-serif;
+                    z-index: 10;
                 }
             </style>
         </head>
@@ -125,48 +86,33 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 const pdfUrl = "${url}";
                 const targetPage = ${targetPage};
                 const isDark = ${colorScheme === 'dark'};
-                const isAndroid = ${Platform.OS === 'android'};
                 
                 let pdfDoc = null;
                 let baseScale = 1.0;
-                let pageHeight = 0;
                 let pageTotalHeight = 0;
                 let renderedPages = new Set();
+                let observer = null;
 
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-                function convertBase64ToUint8Array(base64) {
-                    const binaryString = atob(base64);
-                    const len = binaryString.length;
-                    const bytes = new Uint8Array(len);
-                    for (let i = 0; i < len; i++) {
-                        bytes[i] = binaryString.charCodeAt(i);
-                    }
-                    return bytes;
-                }
-
-                async function loadPdfFromBase64(base64) {
+                async function loadPdf() {
                     try {
-                        const pdfData = convertBase64ToUint8Array(base64);
-                        const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                        const loadingTask = pdfjsLib.getDocument({
+                            url: pdfUrl,
+                            disableRange: true, // Fetch whole file for local storage compatibility
+                            disableAutoFetch: true
+                        });
+                        
                         pdfDoc = await loadingTask.promise;
                         document.getElementById('loading').style.display = 'none';
                         await setupViewer();
                     } catch (e) {
                         console.error('PDF loading error:', e);
-                        document.getElementById('loading').innerText = 'Error: ' + e.message;
-                    }
-                }
-
-                async function loadPdfFromUrl() {
-                    try {
-                        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                        pdfDoc = await loadingTask.promise;
-                        document.getElementById('loading').style.display = 'none';
-                        await setupViewer();
-                    } catch (e) {
-                        console.error('PDF loading error:', e);
-                        document.getElementById('loading').innerText = 'Error: ' + e.message;
+                        if (e.name === 'InvalidPDFException') {
+                            document.getElementById('loading').innerText = 'Error: Invalid PDF structure. The file might be corrupted or not fully downloaded.';
+                        } else {
+                            document.getElementById('loading').innerText = 'Error: ' + e.message;
+                        }
                     }
                 }
 
@@ -175,8 +121,8 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     const firstPage = await pdfDoc.getPage(1);
                     const unscaledViewport = firstPage.getViewport({ scale: 1.0 });
                     baseScale = window.innerWidth / unscaledViewport.width;
-                    const scale = baseScale;
-                    pageHeight = unscaledViewport.height * scale;
+                    
+                    const pageHeight = unscaledViewport.height * baseScale;
                     pageTotalHeight = pageHeight + 20;
 
                     for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -194,23 +140,25 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                         viewer.appendChild(container);
                     }
 
-                    const observer = new IntersectionObserver((entries) => {
+                    observer = new IntersectionObserver((entries) => {
                         entries.forEach(entry => {
                             if (entry.isIntersecting) {
                                 const pageNum = parseInt(entry.target.id.split('-')[1]);
                                 renderPage(pageNum);
                             }
                         });
-                    }, { rootMargin: '500px' });
+                    }, { rootMargin: '600px 0px' });
 
                     document.querySelectorAll('.page-container').forEach(el => observer.observe(el));
 
+                    // Scroll to target page
                     const targetY = (targetPage - 1) * pageTotalHeight;
                     window.scrollTo(0, targetY);
 
+                    // Track current page
                     let lastSentPage = targetPage;
                     window.addEventListener('scroll', () => {
-                        const pageIndex = Math.floor((window.scrollY + window.innerHeight/4) / pageTotalHeight) + 1;
+                        const pageIndex = Math.floor((window.scrollY + window.innerHeight/3) / pageTotalHeight) + 1;
                         const bounded = Math.min(Math.max(pageIndex, 1), pdfDoc.numPages);
                         if (bounded !== lastSentPage) {
                             lastSentPage = bounded;
@@ -227,8 +175,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                     
                     try {
                         const page = await pdfDoc.getPage(pageNum);
-                        const scale = baseScale;
-                        const viewport = page.getViewport({ scale: scale });
+                        const viewport = page.getViewport({ scale: baseScale });
                         const canvas = document.createElement('canvas');
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
@@ -236,23 +183,26 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                         const container = document.getElementById('page-' + pageNum);
                         if (container) {
                             container.appendChild(canvas);
-                            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                            await page.render({ 
+                                canvasContext: canvas.getContext('2d', { alpha: false }), 
+                                viewport 
+                            }).promise;
                         }
                     } catch (e) {
                         console.error('Render error for page ' + pageNum, e);
                     }
                 }
 
-                // Simple zoom using CSS transform
                 window.applyZoom = function(zoomLevel) {
                     const viewer = document.getElementById('viewer');
                     viewer.style.transform = 'scale(' + zoomLevel + ')';
                     viewer.style.transformOrigin = 'top center';
+                    // Adjust container width to prevent horizontal scroll bars when not needed
+                    document.body.style.width = (100 * zoomLevel) + 'vw';
                 };
 
-                if (!isAndroid) {
-                    loadPdfFromUrl();
-                }
+                // Start loading after a short delay to ensure scripts are ready
+                setTimeout(loadPdf, 100);
             </script>
         </body>
         </html>
@@ -267,23 +217,11 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
         } catch (e) { }
     };
 
-    if (Platform.OS === 'ios') {
-        return (
-            <View style={styles.container}>
-                <WebView
-                    source={{ uri: url }}
-                    style={styles.webview}
-                    scalesPageToFit={true}
-                />
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
             <WebView
                 ref={webViewRef}
-                source={{ html: htmlContent, baseUrl: '' }}
+                source={{ html: htmlContent, baseUrl: 'file:///' }}
                 style={styles.webview}
                 onMessage={handleMessage}
                 originWhitelist={['*']}
@@ -292,6 +230,8 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 allowUniversalAccessFromFileURLs={true}
                 javaScriptEnabled={true}
                 domStorageEnabled={true}
+                scalesPageToFit={true}
+                mixedContentMode="always"
             />
         </View>
     );

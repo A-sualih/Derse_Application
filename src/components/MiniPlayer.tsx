@@ -82,12 +82,20 @@ export const MiniPlayer: React.FC = () => {
                 </View>
 
                 <View style={styles.controlsRow}>
-                    <TouchableOpacity onPress={previousTrack} style={styles.skipBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <Ionicons name="play-skip-back" size={24} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                    <TouchableOpacity
+                        onPress={previousTrack}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 20, bottom: 20, left: 15, right: 15 }}
+                    >
+                        <Ionicons name="play-skip-back" size={26} color={colorScheme === 'dark' ? '#000' : '#fff'} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => skip(-10)} style={styles.skipBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <Ionicons name="play-back" size={20} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                    <TouchableOpacity
+                        onPress={() => skip(-10)}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 20, bottom: 20, left: 10, right: 10 }}
+                    >
+                        <Ionicons name="play-back" size={22} color={colorScheme === 'dark' ? '#000' : '#fff'} />
                     </TouchableOpacity>
 
                     <Slider
@@ -101,12 +109,20 @@ export const MiniPlayer: React.FC = () => {
                         thumbTintColor={colorScheme === 'dark' ? '#000' : '#fff'}
                     />
 
-                    <TouchableOpacity onPress={() => skip(10)} style={styles.skipBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <Ionicons name="play-forward" size={20} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                    <TouchableOpacity
+                        onPress={() => skip(10)}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 20, bottom: 20, left: 10, right: 10 }}
+                    >
+                        <Ionicons name="play-forward" size={22} color={colorScheme === 'dark' ? '#000' : '#fff'} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={nextTrack} style={styles.skipBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                        <Ionicons name="play-skip-forward" size={24} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                    <TouchableOpacity
+                        onPress={nextTrack}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 20, bottom: 20, left: 15, right: 15 }}
+                    >
+                        <Ionicons name="play-skip-forward" size={26} color={colorScheme === 'dark' ? '#000' : '#fff'} />
                     </TouchableOpacity>
                 </View>
             </View>

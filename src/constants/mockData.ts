@@ -1,7 +1,7 @@
 import { Category, DriveFile } from '../types';
 
-// Helper to convert Google Drive view links to direct download links
-const getDirectLink = (id: string) => `https://drive.google.com/uc?export=download&id=${id}`;
+// Helper to get direct download links from Google Drive
+const getDirectLink = (id: string) => `https://docs.google.com/uc?export=download&id=${id}&confirm=t`;
 
 const MUMTIC_FILES: DriveFile[] = [
     {
