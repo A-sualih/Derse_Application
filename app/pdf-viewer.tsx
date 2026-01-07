@@ -54,35 +54,36 @@ export default function PdfViewer() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-            <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: colorScheme === 'dark' ? '#333' : '#eee' }]}>
+            <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color={theme.tint} />
-                    <Text style={[styles.backText, { color: theme.tint }]}>Back</Text>
+                    <Ionicons name="chevron-back" size={24} color={theme.text} />
                 </TouchableOpacity>
 
-                <View style={styles.zoomControls}>
+                <View style={[styles.zoomControls, { backgroundColor: theme.border + '50' }]}>
                     <TouchableOpacity onPress={() => handleZoom('out')} style={styles.zoomBtn}>
-                        <Ionicons name="remove-circle-outline" size={24} color={theme.tint} />
+                        <Ionicons name="remove" size={20} color={theme.text} />
                     </TouchableOpacity>
+                    <View style={styles.zoomDivider} />
                     <Text style={[styles.zoomText, { color: theme.text }]}>{Math.round(zoom * 100)}%</Text>
+                    <View style={{ width: 1, height: 16, backgroundColor: theme.border, marginHorizontal: 8 }} />
                     <TouchableOpacity onPress={() => handleZoom('in')} style={styles.zoomBtn}>
-                        <Ionicons name="add-circle-outline" size={24} color={theme.tint} />
+                        <Ionicons name="add" size={20} color={theme.text} />
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.headerRight}>
                     <TouchableOpacity
                         onPress={() => setNotesModalVisible(true)}
-                        style={styles.headerBtn}
+                        style={[styles.headerBtn, { backgroundColor: theme.tint + '15' }]}
                     >
-                        <Ionicons name="document-text-outline" size={24} color={theme.tint} />
+                        <Ionicons name="document-text" size={20} color={theme.tint} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={() => Linking.openURL(remoteUrl || url)}
-                        style={styles.headerBtn}
+                        style={[styles.headerBtn, { backgroundColor: theme.border + '50' }]}
                     >
-                        <Ionicons name="open-outline" size={24} color={theme.tint} />
+                        <Ionicons name="share-outline" size={20} color={theme.text} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -91,14 +92,13 @@ export default function PdfViewer() {
                 visible={notesModalVisible}
                 onClose={() => setNotesModalVisible(false)}
                 currentFileMetadata={{
-                    fileId: name || (url as string), // Use name as ID or fallback to URL
+                    fileId: name || (url as string),
                     fileName: name || 'PDF Document',
                     pageNumber: currentPage
                 }}
             />
 
-
-            <View style={[styles.pdfContainer, { backgroundColor: colorScheme === 'dark' ? '#1a1a1b' : '#F5F5F5' }]}>
+            <View style={[styles.pdfContainer, { backgroundColor: colorScheme === 'dark' ? '#151718' : '#F8FAFC' }]}>
                 <NativePdf
                     url={url as string}
                     remoteUrl={remoteUrl as string}
@@ -108,7 +108,6 @@ export default function PdfViewer() {
                 />
             </View>
 
-
             <MiniPlayer />
         </SafeAreaView>
     );
@@ -117,60 +116,57 @@ export default function PdfViewer() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
     backButton: {
-        flexDirection: 'row',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
         alignItems: 'center',
-        width: 70,
-    },
-    backText: {
-        color: '#007AFF',
-        fontSize: 16,
     },
     zoomControls: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
     },
     zoomBtn: {
-        padding: 5,
+        padding: 4,
+    },
+    zoomDivider: {
+        width: 1,
+        height: 16,
+        backgroundColor: 'rgba(0,0,0,0.1)',
+        marginHorizontal: 12,
     },
     zoomText: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#333',
-        marginHorizontal: 10,
-        minWidth: 40,
+        fontSize: 13,
+        fontWeight: '800',
+        minWidth: 44,
         textAlign: 'center',
     },
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end',
-        gap: 15,
-        width: 80,
+        gap: 12,
     },
     headerBtn: {
-        padding: 4,
-    },
-
-    pdfContainer: {
-        flex: 1,
-        backgroundColor: '#F5F5F5',
-    },
-    loading: {
-        flex: 1,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
+    },
+    pdfContainer: {
+        flex: 1,
     },
 });

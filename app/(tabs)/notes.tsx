@@ -20,8 +20,9 @@ export default function NotesScreen() {
             <Stack.Screen
                 options={{
                     headerShown: true,
-                    title: 'Notes',
+                    title: 'Your Notes',
                     headerStyle: { backgroundColor: theme.background },
+                    headerTitleStyle: { fontWeight: '800', fontSize: 22 },
                     headerTintColor: theme.text,
                     headerShadowVisible: false,
                 }}
@@ -30,8 +31,9 @@ export default function NotesScreen() {
             <NoteList notes={notes} onDelete={deleteNote} />
 
             <TouchableOpacity
-                style={[styles.fab, { backgroundColor: theme.tint }]}
+                style={[styles.fab, { backgroundColor: theme.tint, shadowColor: theme.tint }]}
                 onPress={() => setModalVisible(true)}
+                activeOpacity={0.8}
             >
                 <Ionicons name="add" size={32} color="#fff" />
             </TouchableOpacity>
@@ -51,17 +53,16 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: 'absolute',
-        right: 20,
-        bottom: 20,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        right: 24,
+        bottom: 110, // Adjusted for MiniPlayer space
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         alignItems: 'center',
         justifyContent: 'center',
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
+        elevation: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
     },
 });

@@ -27,9 +27,12 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
     if (notes.length === 0) {
         return (
             <View style={styles.emptyContainer}>
-                <Ionicons name="document-text-outline" size={64} color={colorScheme === 'dark' ? '#333' : '#ccc'} />
-                <Text style={[styles.emptyText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
-                    No notes yet
+                <View style={[styles.emptyIconBox, { backgroundColor: theme.border + '50' }]}>
+                    <Ionicons name="document-text-outline" size={48} color={theme.icon} />
+                </View>
+                <Text style={[styles.emptyTitle, { color: theme.text }]}>No notes yet</Text>
+                <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
+                    Your study notes will appear here.
                 </Text>
             </View>
         );
@@ -40,27 +43,33 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
             data={notes}
             keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-                <View style={[styles.noteItem, { backgroundColor: theme.background, borderColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}>
+                <View style={[styles.noteItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
                     <View style={styles.noteContent}>
                         <Text style={[styles.noteText, { color: theme.text }]}>{item.content}</Text>
                         <View style={styles.noteMetadata}>
-                            <Text style={[styles.dateText, { color: colorScheme === 'dark' ? '#666' : '#999' }]}>
-                                {formatDate(item.createdAt)}
-                            </Text>
-                            {item.fileName && (
-                                <Text style={[styles.contextText, { color: theme.tint }]}>
-                                    • {item.fileName}{item.pageNumber ? `, p. ${item.pageNumber}` : ''}
+                            <View style={styles.dateBox}>
+                                <Ionicons name="time-outline" size={12} color={theme.secondaryText} style={{ marginRight: 4 }} />
+                                <Text style={[styles.dateText, { color: theme.secondaryText }]}>
+                                    {formatDate(item.createdAt)}
                                 </Text>
+                            </View>
+                            {item.fileName && (
+                                <View style={[styles.badge, { backgroundColor: theme.tint + '10' }]}>
+                                    <Text style={[styles.contextText, { color: theme.tint }]} numberOfLines={1}>
+                                        {item.fileName}{item.pageNumber ? ` • p. ${item.pageNumber}` : ''}
+                                    </Text>
+                                </View>
                             )}
                         </View>
                     </View>
                     <TouchableOpacity
                         onPress={() => onDelete(item.id)}
-                        style={styles.deleteButton}
+                        style={[styles.deleteButton, { backgroundColor: '#FF3B3010' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                        <Ionicons name="trash-outline" size={18} color="#FF3B30" />
                     </TouchableOpacity>
                 </View>
             )}
@@ -71,15 +80,20 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
 const styles = StyleSheet.create({
     listContent: {
         padding: 16,
-        paddingBottom: 100, // Space for FAB
+        paddingBottom: 100,
     },
     noteItem: {
         flexDirection: 'row',
         padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
+        borderRadius: 20,
+        marginBottom: 16,
         borderWidth: 1,
         alignItems: 'flex-start',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
     },
     noteContent: {
         flex: 1,
@@ -87,32 +101,63 @@ const styles = StyleSheet.create({
     },
     noteText: {
         fontSize: 16,
-        marginBottom: 8,
-        lineHeight: 22,
-    },
-    dateText: {
-        fontSize: 12,
+        marginBottom: 12,
+        lineHeight: 24,
+        fontWeight: '500',
     },
     noteMetadata: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 8,
+    },
+    dateBox: {
+        flexDirection: 'row',
         alignItems: 'center',
     },
-    contextText: {
+    dateText: {
         fontSize: 12,
         fontWeight: '500',
-        marginLeft: 4,
+    },
+    badge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        maxWidth: '80%',
+    },
+    contextText: {
+        fontSize: 11,
+        fontWeight: '600',
     },
     deleteButton: {
-        padding: 4,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     emptyContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 100,
+        paddingHorizontal: 40,
     },
-    emptyText: {
-        marginTop: 16,
-        fontSize: 16,
+    emptyIconBox: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        marginBottom: 8,
+    },
+    emptySub: {
+        fontSize: 15,
+        textAlign: 'center',
+        lineHeight: 22,
     },
 });

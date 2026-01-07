@@ -22,6 +22,7 @@ interface AudioContextType {
     nextTrack: () => void;
     previousTrack: () => void;
     setPlaybackRate: (rate: number) => Promise<void>;
+    currentQueue: DriveFile[];
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -123,21 +124,26 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     useEffect(() => {
         if (isPlaying && currentUri) {
             positionSaveInterval.current = setInterval(() => {
-                AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString());
-            }, 1000); // Save every 1 second for more precision
+                // Throttle saving: only save if we are actually playing and have a valid position
+                if (position > 0) {
+                    AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString())
+                        .catch(e => console.error("Periodic save failed", e));
+                }
+            }, 5000); // Save every 5 seconds to reduce bridge traffic
         } else {
             if (positionSaveInterval.current) {
                 clearInterval(positionSaveInterval.current);
             }
             // Save one last time on pause
             if (currentUri && position > 0) {
-                AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString());
+                AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString())
+                    .catch(e => console.error("Final save failed", e));
             }
         }
         return () => {
             if (positionSaveInterval.current) clearInterval(positionSaveInterval.current);
         };
-    }, [isPlaying, currentUri, position]);
+    }, [isPlaying, currentUri]); // Removed 'position' from deps to avoid clearing interval every ms
 
     const [currentQueue, setCurrentQueue] = useState<DriveFile[]>(DRIVE_FILES);
 
@@ -321,7 +327,8 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return (
         <AudioContext.Provider value={{
             isPlaying, isLoading, currentUri, currentTitle, currentFileId, position, duration,
-            playbackRate, playSound, pauseSound, seekScroll, skip, nextTrack, previousTrack, setPlaybackRate
+            playbackRate, playSound, pauseSound, seekScroll, skip, nextTrack, previousTrack, setPlaybackRate,
+            currentQueue
         }}>
             {children}
         </AudioContext.Provider>

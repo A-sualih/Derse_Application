@@ -138,21 +138,26 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background, borderBottomColor: colorScheme === 'dark' ? '#333' : '#f0f0f0' }]}>
+        <View style={[
+            styles.container,
+            {
+                backgroundColor: isCurrent ? theme.tint + '05' : theme.background,
+                borderBottomColor: theme.border
+            }
+        ]}>
             <View style={styles.mainRow}>
-                <View style={styles.info}>
+                <View style={[styles.iconBox, { backgroundColor: isCurrent ? theme.tint + '15' : theme.border + '50' }]}>
                     <Ionicons
-                        name={file.type === 'audio' ? 'musical-note' : 'document'}
-                        size={24}
-                        color={theme.icon}
-                        style={styles.icon}
+                        name={file.type === 'audio' ? 'play' : 'document'}
+                        size={20}
+                        color={isCurrent ? theme.tint : theme.icon}
                     />
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{file.name}</Text>
-                        <Text style={[styles.status, { color: theme.icon + '80' }]}>
-                            {downloaded ? 'Downloaded' : 'Not downloaded'}
-                        </Text>
-                    </View>
+                </View>
+                <View style={styles.info}>
+                    <Text style={[styles.name, { color: isCurrent ? theme.tint : theme.text }]} numberOfLines={1}>{file.name}</Text>
+                    <Text style={[styles.status, { color: theme.secondaryText }]}>
+                        {downloaded ? 'Ready to listen' : 'Available for download'}
+                    </Text>
                 </View>
                 {renderAction()}
             </View>
@@ -160,31 +165,37 @@ export const FileListItem: React.FC<FileListItemProps> = ({
             {isCurrent && file.type === 'audio' && (
                 <View style={styles.progressContainer}>
                     <View style={styles.controlsRow}>
-                        <TouchableOpacity onPress={() => onSeek && onSeek(Math.max(0, position - 10000))} style={styles.controlBtn}>
-                            <Ionicons name="refresh-outline" size={24} color="#007AFF" />
-                            <Text style={styles.controlText}>-10s</Text>
+                        <TouchableOpacity
+                            onPress={() => onSeek && onSeek(Math.max(0, position - 10000))}
+                            style={[styles.controlBtn, { backgroundColor: theme.tint + '10' }]}
+                        >
+                            <Ionicons name="refresh" size={18} color={theme.tint} />
+                            <Text style={[styles.controlText, { color: theme.tint }]}>-10s</Text>
                         </TouchableOpacity>
 
-                        <View style={{ flex: 1 }}>
+                        <View style={{ flex: 1, marginHorizontal: 12 }}>
                             <Slider
                                 style={styles.slider}
                                 minimumValue={0}
                                 maximumValue={duration}
                                 value={position}
                                 onSlidingComplete={onSeek}
-                                minimumTrackTintColor="#007AFF"
-                                maximumTrackTintColor="#ccc"
-                                thumbTintColor="#007AFF"
+                                minimumTrackTintColor={theme.tint}
+                                maximumTrackTintColor={theme.border}
+                                thumbTintColor={theme.tint}
                             />
                             <View style={styles.timeLabels}>
-                                <Text style={styles.timeText}>{formatTime(position)}</Text>
-                                <Text style={styles.timeText}>{formatTime(duration)}</Text>
+                                <Text style={[styles.timeText, { color: theme.secondaryText }]}>{formatTime(position)}</Text>
+                                <Text style={[styles.timeText, { color: theme.secondaryText }]}>{formatTime(duration)}</Text>
                             </View>
                         </View>
 
-                        <TouchableOpacity onPress={() => onSeek && onSeek(Math.min(duration, position + 10000))} style={styles.controlBtn}>
-                            <Ionicons name="refresh-outline" size={24} color="#007AFF" style={{ transform: [{ scaleX: -1 }] }} />
-                            <Text style={styles.controlText}>+10s</Text>
+                        <TouchableOpacity
+                            onPress={() => onSeek && onSeek(Math.min(duration, position + 10000))}
+                            style={[styles.controlBtn, { backgroundColor: theme.tint + '10' }]}
+                        >
+                            <Ionicons name="refresh" size={18} color={theme.tint} style={{ transform: [{ scaleX: -1 }] }} />
+                            <Text style={[styles.controlText, { color: theme.tint }]}>+10s</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -195,34 +206,33 @@ export const FileListItem: React.FC<FileListItemProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-        paddingVertical: 8,
+        paddingVertical: 12,
     },
     mainRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 8,
+    },
+    iconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     info: {
-        flexDirection: 'row',
-        alignItems: 'center',
         flex: 1,
-    },
-    icon: {
-        marginRight: 12,
+        marginRight: 8,
     },
     name: {
         fontSize: 16,
-        fontWeight: '500',
-        color: '#333',
+        fontWeight: '600',
+        letterSpacing: -0.3,
     },
     status: {
         fontSize: 12,
-        color: '#888',
         marginTop: 2,
     },
     actionContainer: {
@@ -230,61 +240,65 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     downloadButton: {
-        padding: 8,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     actionButton: {
-        flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
     },
     speedButton: {
-        marginLeft: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 12,
-        backgroundColor: 'rgba(0, 122, 255, 0.1)',
-        minWidth: 50,
+        marginLeft: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        minWidth: 44,
         alignItems: 'center',
-        justifyContent: 'center',
     },
     speedButtonText: {
-        fontSize: 13,
-        fontWeight: 'bold',
+        fontSize: 11,
+        fontWeight: '800',
     },
     progressContainer: {
         paddingHorizontal: 16,
-        paddingBottom: 8,
+        marginTop: 12,
+        paddingBottom: 4,
     },
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
     },
     controlBtn: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 5,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
     },
     controlText: {
-        fontSize: 10,
-        color: '#007AFF',
+        fontSize: 9,
+        fontWeight: '700',
         marginTop: -2,
     },
     slider: {
-        width: '100%',
-        height: 40,
+        height: 30,
     },
     timeLabels: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: -8,
-        paddingHorizontal: 40,
+        marginTop: -4,
     },
     timeText: {
-        fontSize: 12,
-        color: '#666',
+        fontSize: 11,
+        fontWeight: '500',
     },
 });

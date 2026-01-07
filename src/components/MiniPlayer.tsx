@@ -1,9 +1,9 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DRIVE_FILES } from '@/src/constants/mockData';
 import { useAudio } from '@/src/context/AudioContext';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { BlurView } from 'expo-blur';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -22,7 +22,8 @@ export const MiniPlayer: React.FC = () => {
         skip,
         nextTrack,
         previousTrack,
-        setPlaybackRate
+        setPlaybackRate,
+        currentQueue
     } = useAudio();
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
@@ -30,8 +31,8 @@ export const MiniPlayer: React.FC = () => {
 
     if (!currentUri) return null;
 
-    // Define audioFiles for the list modal
-    const audioFiles = DRIVE_FILES.filter(file => file.type === 'audio');
+    // Define audioFiles for the list modal from the current queue
+    const audioFiles = currentQueue.filter(file => file.type === 'audio');
 
     // Use title from context, or fallback to "Audio"
     const trackName = currentTitle || 'Audio';
@@ -53,28 +54,44 @@ export const MiniPlayer: React.FC = () => {
         }
     };
 
+    const isDark = colorScheme === 'dark';
+
     return (
-        <>
-            <View style={[styles.container, { backgroundColor: theme.tint }]}>
+        <View style={styles.outerContainer}>
+            <BlurView
+                intensity={isDark ? 80 : 100}
+                tint={isDark ? 'dark' : 'light'}
+                style={[styles.container, { borderTopColor: theme.border }]}
+            >
                 <View style={styles.header}>
-                    <Text style={[styles.title, { color: colorScheme === 'dark' ? '#000' : '#fff' }]} numberOfLines={1}>{trackName}</Text>
+                    <View style={styles.titleInfo}>
+                        <Ionicons
+                            name="musical-note"
+                            size={18}
+                            color={theme.tint}
+                            style={{ marginRight: 8 }}
+                        />
+                        <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
+                            {trackName}
+                        </Text>
+                    </View>
                     <View style={styles.headerButtons}>
-                        <TouchableOpacity onPress={handleSpeedCycle} style={styles.speedBtn}>
-                            <Text style={[styles.speedText, { color: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+                        <TouchableOpacity onPress={handleSpeedCycle} style={[styles.speedBtn, { backgroundColor: theme.tint + '15' }]}>
+                            <Text style={[styles.speedText, { color: theme.tint }]}>
                                 {playbackRate}x
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => setShowTrackList(true)} style={styles.iconBtn}>
-                            <Ionicons name="list" size={24} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                            <Ionicons name="list" size={22} color={theme.text} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handlePlayPause} style={styles.playBtn}>
+                        <TouchableOpacity onPress={handlePlayPause} style={[styles.playBtn, { backgroundColor: theme.tint }]}>
                             {isLoading ? (
-                                <ActivityIndicator color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                                <ActivityIndicator color="#fff" size="small" />
                             ) : (
                                 <Ionicons
                                     name={isPlaying ? "pause" : "play"}
-                                    size={28}
-                                    color={colorScheme === 'dark' ? '#000' : '#fff'}
+                                    size={24}
+                                    color="#fff"
                                 />
                             )}
                         </TouchableOpacity>
@@ -85,17 +102,17 @@ export const MiniPlayer: React.FC = () => {
                     <TouchableOpacity
                         onPress={previousTrack}
                         style={styles.skipBtn}
-                        hitSlop={{ top: 20, bottom: 20, left: 15, right: 15 }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="play-skip-back" size={26} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                        <Ionicons name="play-skip-back" size={24} color={theme.text} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={() => skip(-10)}
                         style={styles.skipBtn}
-                        hitSlop={{ top: 20, bottom: 20, left: 10, right: 10 }}
+                        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="play-back" size={22} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                        <Ionicons name="backspace-outline" size={20} color={theme.secondaryText} />
                     </TouchableOpacity>
 
                     <Slider
@@ -104,28 +121,28 @@ export const MiniPlayer: React.FC = () => {
                         maximumValue={duration}
                         value={position}
                         onSlidingComplete={seekScroll}
-                        minimumTrackTintColor={colorScheme === 'dark' ? '#000' : '#fff'}
-                        maximumTrackTintColor={colorScheme === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'}
-                        thumbTintColor={colorScheme === 'dark' ? '#000' : '#fff'}
+                        minimumTrackTintColor={theme.tint}
+                        maximumTrackTintColor={theme.border}
+                        thumbTintColor={theme.tint}
                     />
 
                     <TouchableOpacity
                         onPress={() => skip(10)}
                         style={styles.skipBtn}
-                        hitSlop={{ top: 20, bottom: 20, left: 10, right: 10 }}
+                        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="play-forward" size={22} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                        <Ionicons name="backspace-outline" size={20} color={theme.secondaryText} style={{ transform: [{ rotate: '180deg' }] }} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={nextTrack}
                         style={styles.skipBtn}
-                        hitSlop={{ top: 20, bottom: 20, left: 15, right: 15 }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="play-skip-forward" size={26} color={colorScheme === 'dark' ? '#000' : '#fff'} />
+                        <Ionicons name="play-skip-forward" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
-            </View>
+            </BlurView>
 
             <Modal
                 visible={showTrackList}
@@ -134,31 +151,47 @@ export const MiniPlayer: React.FC = () => {
                 onRequestClose={() => setShowTrackList(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+                    <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>All Audio Tracks</Text>
-                            <TouchableOpacity onPress={() => setShowTrackList(false)}>
-                                <Ionicons name="close" size={28} color={theme.text} />
+                            <Text style={[styles.modalTitle, { color: theme.text }]}>Queue</Text>
+                            <TouchableOpacity
+                                onPress={() => setShowTrackList(false)}
+                                style={[styles.closeIcon, { backgroundColor: theme.border + '50' }]}
+                            >
+                                <Ionicons name="close" size={24} color={theme.text} />
                             </TouchableOpacity>
                         </View>
                         <FlatList
                             data={audioFiles}
                             keyExtractor={(item) => item.id}
+                            showsVerticalScrollIndicator={false}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={[
                                         styles.trackItem,
-                                        { backgroundColor: item.url === currentUri ? theme.tint : 'transparent' }
+                                        {
+                                            backgroundColor: item.url === currentUri ? theme.tint + '10' : 'transparent',
+                                            borderColor: item.url === currentUri ? theme.tint + '30' : 'transparent'
+                                        }
                                     ]}
                                     onPress={() => {
                                         playSound(item.url, item.name, undefined, item.id);
                                         setShowTrackList(false);
                                     }}
                                 >
+                                    <Ionicons
+                                        name={item.url === currentUri ? "volume-high" : "musical-note-outline"}
+                                        size={18}
+                                        color={item.url === currentUri ? theme.tint : theme.secondaryText}
+                                        style={{ marginRight: 12 }}
+                                    />
                                     <Text style={[
                                         styles.trackName,
-                                        { color: item.url === currentUri ? (colorScheme === 'dark' ? '#000' : '#fff') : theme.text }
-                                    ]}>
+                                        {
+                                            color: item.url === currentUri ? theme.tint : theme.text,
+                                            fontWeight: item.url === currentUri ? '700' : '500'
+                                        }
+                                    ]} numberOfLines={1}>
                                         {item.name}
                                     </Text>
                                 </TouchableOpacity>
@@ -167,55 +200,70 @@ export const MiniPlayer: React.FC = () => {
                     </View>
                 </View>
             </Modal>
-        </>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    outerContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#007AFF',
-        padding: 15,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        elevation: 10,
+        elevation: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
+        shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+    },
+    container: {
+        paddingTop: 16,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        borderTopWidth: 1,
+        overflow: 'hidden',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 10,
+        marginBottom: 16,
+    },
+    titleInfo: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     title: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: 'bold',
-        flex: 1,
-        marginRight: 10,
+        fontSize: 16,
+        fontWeight: '700',
+        letterSpacing: -0.5,
     },
     headerButtons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
     },
     iconBtn: {
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: 18,
     },
     playBtn: {
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: 24,
+        elevation: 8,
+        shadowColor: '#2563EB',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
     },
     controlsRow: {
         flexDirection: 'row',
@@ -225,54 +273,66 @@ const styles = StyleSheet.create({
     slider: {
         flex: 1,
         height: 40,
-        marginHorizontal: 10,
+        marginHorizontal: 8,
     },
     skipBtn: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(15, 23, 42, 0.4)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        height: '70%',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
+        height: '75%',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        padding: 24,
+        elevation: 25,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 24,
     },
     modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 24,
+        fontWeight: '800',
+        letterSpacing: -1,
+    },
+    closeIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     trackItem: {
-        padding: 15,
-        borderRadius: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
         marginBottom: 8,
+        borderWidth: 1,
     },
     trackName: {
         fontSize: 16,
+        flex: 1,
     },
     speedBtn: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 12,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        minWidth: 45,
+        minWidth: 44,
         alignItems: 'center',
         justifyContent: 'center',
     },
     speedText: {
         fontSize: 13,
-        fontWeight: 'bold',
+        fontWeight: '800',
     },
 });
