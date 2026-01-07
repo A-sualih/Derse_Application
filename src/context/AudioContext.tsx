@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { Audio as ExpoAV } from 'expo-av';
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import { DRIVE_FILES } from '../constants/mockData';
@@ -41,15 +40,23 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const shouldAutoPlay = useRef(false);
 
     // Sync status back to our context-friendly state
+    const positionRef = useRef(0);
     const isPlaying = localIsPlaying;
     const position = status.currentTime * 1000; // status is in seconds, we use ms for compatibility
     const duration = status.duration * 1000;
 
+    // Keep positionRef in sync with position for background saving
+    useEffect(() => {
+        positionRef.current = position;
+    }, [position]);
+
     // Sync localIsPlaying with native status, but skip while loading or during transitions
     useEffect(() => {
+        let isMounted = true;
         if (!isLoading) {
             setLocalIsPlaying(status.playing);
         }
+        return () => { isMounted = false; };
     }, [status.playing, isLoading]);
 
     useEffect(() => {
@@ -59,9 +66,7 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 await setAudioModeAsync({
                     playsInSilentMode: true,
                     shouldPlayInBackground: true,
-                    // casting to any because expo-audio types expect a string union, but native expects an Enum value
-                    // @ts-ignore - Enum might be defined differently in this version of expo-av
-                    interruptionMode: (ExpoAV as any).INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+                    interruptionModeAndroid: 'duckOthers' as any,
                 });
                 console.log('Audio mode configured for background playback');
 
@@ -124,26 +129,31 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     useEffect(() => {
         if (isPlaying && currentUri) {
             positionSaveInterval.current = setInterval(() => {
-                // Throttle saving: only save if we are actually playing and have a valid position
-                if (position > 0) {
-                    AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString())
-                        .catch(e => console.error("Periodic save failed", e));
+                const currentPos = positionRef.current;
+                if (currentPos > 0) {
+                    AsyncStorage.setItem(getPersistenceKey(currentUri), currentPos.toString())
+                        .catch(e => { /* Ignore background saving errors */ });
                 }
-            }, 5000); // Save every 5 seconds to reduce bridge traffic
+            }, 10000);
         } else {
             if (positionSaveInterval.current) {
                 clearInterval(positionSaveInterval.current);
+                positionSaveInterval.current = null;
             }
             // Save one last time on pause
-            if (currentUri && position > 0) {
-                AsyncStorage.setItem(getPersistenceKey(currentUri), position.toString())
-                    .catch(e => console.error("Final save failed", e));
+            const currentPos = positionRef.current;
+            if (currentUri && currentPos > 0) {
+                AsyncStorage.setItem(getPersistenceKey(currentUri), currentPos.toString())
+                    .catch(() => { });
             }
         }
         return () => {
-            if (positionSaveInterval.current) clearInterval(positionSaveInterval.current);
+            if (positionSaveInterval.current) {
+                clearInterval(positionSaveInterval.current);
+                positionSaveInterval.current = null;
+            }
         };
-    }, [isPlaying, currentUri]); // Removed 'position' from deps to avoid clearing interval every ms
+    }, [isPlaying, currentUri]);
 
     const [currentQueue, setCurrentQueue] = useState<DriveFile[]>(DRIVE_FILES);
 

@@ -221,7 +221,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
         <View style={styles.container}>
             <WebView
                 ref={webViewRef}
-                source={{ html: htmlContent, baseUrl: 'file:///' }}
+                source={{ html: htmlContent, baseUrl: '' }}
                 style={styles.webview}
                 onMessage={handleMessage}
                 originWhitelist={['*']}
@@ -230,8 +230,10 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 allowUniversalAccessFromFileURLs={true}
                 javaScriptEnabled={true}
                 domStorageEnabled={true}
-                scalesPageToFit={true}
-                mixedContentMode="always"
+                scalesPageToFit={false}
+                androidLayerType="hardware"
+                mediaPlaybackRequiresUserAction={true}
+                automaticallyAdjustContentInsets={false}
             />
         </View>
     );
