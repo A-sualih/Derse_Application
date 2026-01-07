@@ -59,6 +59,7 @@ export const FileListItem: React.FC<FileListItemProps> = ({
                 pathname: '/pdf-viewer',
                 params: {
                     url: localUri,
+                    remoteUrl: file.url,
                     name: file.name,
                 },
             });

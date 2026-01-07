@@ -7,13 +7,10 @@ const getRootDir = () => {
 
     if (!dir) {
         // Fallback for Android Expo Go specifically if everything else failed
-        // This is a common path for Expo Go cache
         if (Platform.OS === 'android') {
-            console.warn('Attempting hardcoded fallback for Android Expo Go');
             return 'file:///data/user/0/host.exp.exponent/cache/';
         }
-
-        return null;
+        return '/tmp/'; // Web/other fallback
     }
     return dir;
 };
@@ -40,7 +37,10 @@ export const ensureDirectoryExists = async () => {
 
 export const getLocalUri = (filename: string) => {
     const dir = getFilesDirectory();
-    return dir ? dir + encodeURIComponent(filename) : null;
+    // Expo FileSystem handles most characters fine, but we should ensure it's a valid URI part
+    // Using encodeURIComponent only on the filename but sometimes it causes issues with Ethiopian chars in WebView
+    // Let's keep it simple as FileSystem.downloadAsync uses the raw string usually
+    return dir ? dir + filename : null;
 };
 
 export const checkFileExists = async (filename: string): Promise<boolean> => {

@@ -59,38 +59,59 @@ export const MiniPlayer: React.FC = () => {
     return (
         <View style={styles.outerContainer}>
             <BlurView
-                intensity={isDark ? 80 : 100}
+                intensity={isDark ? 90 : 100}
                 tint={isDark ? 'dark' : 'light'}
-                style={[styles.container, { borderTopColor: theme.border }]}
+                style={[styles.container, { borderTopColor: theme.tint + '30' }]}
             >
+                {/* Vibrant Background Overlay */}
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: theme.tint + (isDark ? '10' : '08'),
+                            opacity: 0.6
+                        }
+                    ]}
+                />
+
                 <View style={styles.header}>
                     <View style={styles.titleInfo}>
-                        <Ionicons
-                            name="musical-note"
-                            size={18}
-                            color={theme.tint}
-                            style={{ marginRight: 8 }}
-                        />
+                        <View style={[styles.iconBox, { backgroundColor: theme.tint + '15' }]}>
+                            <Ionicons
+                                name="musical-note"
+                                size={20}
+                                color={theme.tint}
+                            />
+                        </View>
                         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
                             {trackName}
                         </Text>
                     </View>
                     <View style={styles.headerButtons}>
-                        <TouchableOpacity onPress={handleSpeedCycle} style={[styles.speedBtn, { backgroundColor: theme.tint + '15' }]}>
+                        <TouchableOpacity
+                            onPress={handleSpeedCycle}
+                            style={[styles.speedBtn, { backgroundColor: theme.tint + '20' }]}
+                        >
                             <Text style={[styles.speedText, { color: theme.tint }]}>
                                 {playbackRate}x
                             </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShowTrackList(true)} style={styles.iconBtn}>
-                            <Ionicons name="list" size={22} color={theme.text} />
+                        <TouchableOpacity
+                            onPress={() => setShowTrackList(true)}
+                            style={[styles.iconBtn, { backgroundColor: theme.border + '30' }]}
+                        >
+                            <Ionicons name="list" size={24} color={theme.text} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handlePlayPause} style={[styles.playBtn, { backgroundColor: theme.tint }]}>
+                        <TouchableOpacity
+                            onPress={handlePlayPause}
+                            style={[styles.playBtn, { backgroundColor: theme.tint }]}
+                        >
                             {isLoading ? (
                                 <ActivityIndicator color="#fff" size="small" />
                             ) : (
                                 <Ionicons
                                     name={isPlaying ? "pause" : "play"}
-                                    size={24}
+                                    size={28}
                                     color="#fff"
                                 />
                             )}
@@ -101,7 +122,7 @@ export const MiniPlayer: React.FC = () => {
                 <View style={styles.controlsRow}>
                     <TouchableOpacity
                         onPress={previousTrack}
-                        style={styles.skipBtn}
+                        style={[styles.skipBtn, { backgroundColor: theme.border + '20' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Ionicons name="play-skip-back" size={24} color={theme.text} />
@@ -109,10 +130,10 @@ export const MiniPlayer: React.FC = () => {
 
                     <TouchableOpacity
                         onPress={() => skip(-10)}
-                        style={styles.skipBtn}
+                        style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="backspace-outline" size={20} color={theme.secondaryText} />
+                        <Ionicons name="refresh" size={22} color={theme.secondaryText} />
                     </TouchableOpacity>
 
                     <Slider
@@ -122,21 +143,21 @@ export const MiniPlayer: React.FC = () => {
                         value={position}
                         onSlidingComplete={seekScroll}
                         minimumTrackTintColor={theme.tint}
-                        maximumTrackTintColor={theme.border}
+                        maximumTrackTintColor={theme.border + '50'}
                         thumbTintColor={theme.tint}
                     />
 
                     <TouchableOpacity
                         onPress={() => skip(10)}
-                        style={styles.skipBtn}
+                        style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="backspace-outline" size={20} color={theme.secondaryText} style={{ transform: [{ rotate: '180deg' }] }} />
+                        <Ionicons name="refresh" size={22} color={theme.secondaryText} style={{ transform: [{ scaleX: -1 }] }} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={nextTrack}
-                        style={styles.skipBtn}
+                        style={[styles.skipBtn, { backgroundColor: theme.border + '20' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <Ionicons name="play-skip-forward" size={24} color={theme.text} />
@@ -210,88 +231,99 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        elevation: 20,
+        elevation: 25,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
+        shadowOffset: { width: 0, height: -12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 24,
     },
     container: {
-        paddingTop: 16,
-        paddingBottom: 24,
+        paddingTop: 18,
+        paddingBottom: 28,
         paddingHorizontal: 20,
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
-        borderTopWidth: 1,
+        borderTopLeftRadius: 36,
+        borderTopRightRadius: 36,
+        borderTopWidth: 1.5,
         overflow: 'hidden',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     titleInfo: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
+        marginRight: 10,
+    },
+    iconBox: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     title: {
         fontSize: 16,
-        fontWeight: '700',
-        letterSpacing: -0.5,
+        fontWeight: '800',
+        letterSpacing: -0.6,
     },
     headerButtons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 14,
     },
     iconBtn: {
-        width: 36,
-        height: 36,
+        width: 42,
+        height: 42,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 18,
+        borderRadius: 21,
     },
     playBtn: {
-        width: 48,
-        height: 48,
+        width: 52,
+        height: 52,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 24,
-        elevation: 8,
+        borderRadius: 26,
+        elevation: 10,
         shadowColor: '#2563EB',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
     },
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: 4,
     },
     slider: {
         flex: 1,
-        height: 40,
-        marginHorizontal: 8,
+        height: 44,
+        marginHorizontal: 4,
     },
     skipBtn: {
-        width: 40,
-        height: 40,
+        width: 48, // Increased width for better accessibility
+        height: 48,
         alignItems: 'center',
         justifyContent: 'center',
+        borderRadius: 24,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(15, 23, 42, 0.4)',
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
         justifyContent: 'flex-end',
     },
     modalContent: {
         height: '75%',
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
+        borderTopLeftRadius: 36,
+        borderTopRightRadius: 36,
         padding: 24,
-        elevation: 25,
+        elevation: 30,
     },
     modalHeader: {
         flexDirection: 'row',
@@ -300,39 +332,40 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     modalTitle: {
-        fontSize: 24,
-        fontWeight: '800',
-        letterSpacing: -1,
+        fontSize: 26,
+        fontWeight: '900',
+        letterSpacing: -1.2,
     },
     closeIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         justifyContent: 'center',
         alignItems: 'center',
     },
     trackItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 8,
-        borderWidth: 1,
+        padding: 18,
+        borderRadius: 20,
+        marginBottom: 10,
+        borderWidth: 1.5,
     },
     trackName: {
         fontSize: 16,
         flex: 1,
+        letterSpacing: -0.3,
     },
     speedBtn: {
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 12,
-        minWidth: 44,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 14,
+        minWidth: 50, // Added more width as requested
         alignItems: 'center',
         justifyContent: 'center',
     },
     speedText: {
         fontSize: 13,
-        fontWeight: '800',
+        fontWeight: '900',
     },
 });

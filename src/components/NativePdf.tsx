@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import * as FileSystem from 'expo-file-system/legacy';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -15,6 +16,27 @@ interface NativePdfProps {
 const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, zoom = 1.0, onPageChanged }) => {
     const webViewRef = useRef<WebView>(null);
     const colorScheme = useColorScheme() ?? 'light';
+    const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadLocalFile = async () => {
+            if (url.startsWith('file://')) {
+                try {
+                    // Read file as base64 to bypass WebView security restrictions on local files
+                    const base64 = await FileSystem.readAsStringAsync(url, {
+                        encoding: FileSystem.EncodingType.Base64,
+                    });
+                    setPdfBase64(base64);
+                } catch (error) {
+                    console.error('Error reading local PDF as base64:', error);
+                    setPdfBase64(null); // Fallback to URL in WebView
+                }
+            } else {
+                setPdfBase64(null);
+            }
+        };
+        loadLocalFile();
+    }, [url]);
 
     // Apply zoom when it changes
     useEffect(() => {
@@ -84,6 +106,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
             <div id="viewer"></div>
             <script>
                 const pdfUrl = "${url}";
+                const pdfBase64 = ${pdfBase64 ? JSON.stringify(pdfBase64) : 'null'};
                 const targetPage = ${targetPage};
                 const isDark = ${colorScheme === 'dark'};
                 
@@ -97,27 +120,67 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
 
                 async function loadPdf() {
                     try {
-                        const loadingTask = pdfjsLib.getDocument({
-                            url: pdfUrl,
-                            disableRange: true, // Fetch whole file for local storage compatibility
-                            disableAutoFetch: true
-                        });
+                        let loadingTask;
+                        
+                        if (pdfBase64) {
+                            console.log('Loading from Base64 data');
+                            const binaryString = atob(pdfBase64);
+                            const bytes = new Uint8Array(binaryString.length);
+                            for (let i = 0; i < binaryString.length; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            loadingTask = pdfjsLib.getDocument({ data: bytes });
+                        } else {
+                            console.log('Loading from URL:', pdfUrl);
+                            loadingTask = pdfjsLib.getDocument({
+                                url: pdfUrl,
+                                disableRange: true,
+                                disableAutoFetch: true
+                            });
+                        }
                         
                         pdfDoc = await loadingTask.promise;
                         document.getElementById('loading').style.display = 'none';
                         await setupViewer();
                     } catch (e) {
                         console.error('PDF loading error:', e);
+                        
+                        // Fallback to remote if first attempt (base64 or local url) fails
+                        const remoteUrl = "${remoteUrl}";
+                        if (remoteUrl && remoteUrl !== "undefined" && pdfUrl !== remoteUrl) {
+                            console.log('Falling back to remote URL:', remoteUrl);
+                            document.getElementById('loading').innerText = 'Local load failed. Fetching remote...';
+                            
+                            // Try loading from remote URL directly
+                            try {
+                                const fallbackTask = pdfjsLib.getDocument({
+                                    url: remoteUrl,
+                                    disableRange: true,
+                                    disableAutoFetch: true
+                                });
+                                pdfDoc = await fallbackTask.promise;
+                                document.getElementById('loading').style.display = 'none';
+                                await setupViewer();
+                                return;
+                            } catch (fallbackError) {
+                                console.error('Fallback failed:', fallbackError);
+                            }
+                        }
+
                         if (e.name === 'InvalidPDFException') {
-                            document.getElementById('loading').innerText = 'Error: Invalid PDF structure. The file might be corrupted or not fully downloaded.';
+                            document.getElementById('loading').innerText = 'Error: Invalid PDF structure.';
                         } else {
-                            document.getElementById('loading').innerText = 'Error: ' + e.message;
+                            document.getElementById('loading').innerText = 'Error loading PDF: ' + e.message;
                         }
                     }
                 }
 
                 async function setupViewer() {
                     const viewer = document.getElementById('viewer');
+                    if (!viewer) return;
+                    viewer.innerHTML = '';
+                    renderedPages = new Set();
+
                     const firstPage = await pdfDoc.getPage(1);
                     const unscaledViewport = firstPage.getViewport({ scale: 1.0 });
                     baseScale = window.innerWidth / unscaledViewport.width;
@@ -195,9 +258,10 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
 
                 window.applyZoom = function(zoomLevel) {
                     const viewer = document.getElementById('viewer');
-                    viewer.style.transform = 'scale(' + zoomLevel + ')';
-                    viewer.style.transformOrigin = 'top center';
-                    // Adjust container width to prevent horizontal scroll bars when not needed
+                    if (viewer) {
+                        viewer.style.transform = 'scale(' + zoomLevel + ')';
+                        viewer.style.transformOrigin = 'top center';
+                    }
                     document.body.style.width = (100 * zoomLevel) + 'vw';
                 };
 
@@ -232,6 +296,7 @@ const NativePdf: React.FC<NativePdfProps> = ({ url, remoteUrl, targetPage = 1, z
                 domStorageEnabled={true}
                 scalesPageToFit={false}
                 androidLayerType="hardware"
+                mixedContentMode="always"
                 mediaPlaybackRequiresUserAction={true}
                 automaticallyAdjustContentInsets={false}
             />
