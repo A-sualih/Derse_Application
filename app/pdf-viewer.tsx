@@ -1,6 +1,5 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MiniPlayer } from '@/src/components/MiniPlayer';
 import NativePdf from '@/src/components/NativePdf';
 import { NotesManagerModal } from '@/src/components/NotesManagerModal';
 
@@ -107,8 +106,6 @@ export default function PdfViewer() {
                     onPageChanged={handlePageUpdate}
                 />
             </View>
-
-            <MiniPlayer />
         </SafeAreaView>
     );
 }

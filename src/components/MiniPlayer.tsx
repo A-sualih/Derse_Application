@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { BlurView } from 'expo-blur';
 import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const MiniPlayer: React.FC = () => {
     const {
@@ -55,6 +55,14 @@ export const MiniPlayer: React.FC = () => {
     };
 
     const isDark = colorScheme === 'dark';
+    const isWeb = Platform.OS === 'web';
+
+    const formatTime = (millis: number) => {
+        const totalSeconds = Math.floor(millis / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
 
     return (
         <View style={styles.outerContainer}>
@@ -133,26 +141,38 @@ export const MiniPlayer: React.FC = () => {
                         style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="refresh" size={22} color={theme.secondaryText} />
+                        <Ionicons name="refresh" size={20} color={theme.secondaryText} />
+                        <Text style={[styles.skipText, { color: theme.secondaryText }]}>-10s</Text>
                     </TouchableOpacity>
 
-                    <Slider
-                        style={styles.slider}
-                        minimumValue={0}
-                        maximumValue={duration}
-                        value={position}
-                        onSlidingComplete={seekScroll}
-                        minimumTrackTintColor={theme.tint}
-                        maximumTrackTintColor={theme.border + '50'}
-                        thumbTintColor={theme.tint}
-                    />
+                    <View style={{ flex: 1, marginHorizontal: 4 }}>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={0}
+                            maximumValue={duration}
+                            value={position}
+                            onSlidingComplete={seekScroll}
+                            minimumTrackTintColor={theme.tint}
+                            maximumTrackTintColor={theme.border + '50'}
+                            thumbTintColor={theme.tint}
+                        />
+                        <View style={styles.timeLabelContainer}>
+                            <Text style={[styles.timeLabel, { color: theme.secondaryText }]}>
+                                {formatTime(position)}
+                            </Text>
+                            <Text style={[styles.timeLabel, { color: theme.secondaryText }]}>
+                                {formatTime(duration)}
+                            </Text>
+                        </View>
+                    </View>
 
                     <TouchableOpacity
                         onPress={() => skip(10)}
                         style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="refresh" size={22} color={theme.secondaryText} style={{ transform: [{ scaleX: -1 }] }} />
+                        <Ionicons name="refresh" size={20} color={theme.secondaryText} style={{ transform: [{ scaleX: -1 }] }} />
+                        <Text style={[styles.skipText, { color: theme.secondaryText }]}>+10s</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -302,16 +322,19 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     slider: {
-        flex: 1,
-        height: 44,
-        marginHorizontal: 4,
+        height: 32,
     },
     skipBtn: {
-        width: 48, // Increased width for better accessibility
+        width: 48,
         height: 48,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 24,
+    },
+    skipText: {
+        fontSize: 9,
+        fontWeight: '700',
+        marginTop: -4,
     },
     modalOverlay: {
         flex: 1,
@@ -367,5 +390,16 @@ const styles = StyleSheet.create({
     speedText: {
         fontSize: 13,
         fontWeight: '900',
+    },
+    timeLabelContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: -8,
+        paddingHorizontal: 2,
+    },
+    timeLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
 });

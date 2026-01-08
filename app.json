@@ -13,12 +13,13 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/new-project-id"
+      "url": "https://u.expo.dev/67f97a96-cef1-4138-ab0d-80c903c2ba4a"
     },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
         "UIBackgroundModes": [
+          "audio",
           "audio"
         ]
       }
@@ -34,6 +35,11 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.sualih.DerseAppNew",
       "permissions": [
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
         "WAKE_LOCK",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_AUDIO",
