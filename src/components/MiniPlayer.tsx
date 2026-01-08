@@ -228,7 +228,7 @@ export const MiniPlayer: React.FC = () => {
 const styles = StyleSheet.create({
     outerContainer: {
         position: 'absolute',
-        bottom: 0,
+        bottom: 52, // Height of the TabBar roughly
         left: 0,
         right: 0,
         elevation: 25,

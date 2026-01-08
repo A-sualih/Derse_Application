@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "   የኪታብ ደርሶች ",
-    "slug": "DerseApp",
+    "name": "የኪታብ ደርሶች - አዲስ",
+    "slug": "DerseApp-New",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "derseapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "package": "com.sualih.DerseApp",
+    "package": "com.sualih.DerseAppNew",
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/178aa31d-d9a1-4baf-ad07-4eaba4012ec0"
+      "url": "https://u.expo.dev/new-project-id"
     },
     "ios": {
       "supportsTablet": true,
@@ -32,11 +32,13 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sualih.DerseApp",
+      "package": "com.sualih.DerseAppNew",
       "permissions": [
         "WAKE_LOCK",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_AUDIO"
+        "FOREGROUND_SERVICE_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -76,9 +78,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "178aa31d-d9a1-4baf-ad07-4eaba4012ec0"
+        "projectId": "67f97a96-cef1-4138-ab0d-80c903c2ba4a"
       }
     },
-    "owner": "abumahi"
+    "owner": "ebro"
   }
 }

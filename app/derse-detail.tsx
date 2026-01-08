@@ -22,6 +22,7 @@ export default function DerseDetailScreen() {
         seekScroll,
         isPlaying,
         currentUri,
+        currentFileId,
         isLoading,
         position,
         duration,
@@ -74,7 +75,7 @@ export default function DerseDetailScreen() {
                 data={category.files}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
-                    const isItemCurrent = currentUri?.endsWith(encodeURIComponent(item.name));
+                    const isItemCurrent = currentFileId === item.id;
                     return (
                         <FileListItem
                             file={item}

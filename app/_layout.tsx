@@ -1,7 +1,11 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { View } from 'react-native';
 import 'react-native-reanimated';
+
+import { MiniPlayer } from '../src/components/MiniPlayer';
 
 import { useColorScheme } from '../hooks/use-color-scheme';
 import { AudioProvider } from '../src/context/AudioContext';
@@ -34,12 +38,15 @@ function LayoutContent() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="pdf-viewer" options={{ title: 'PDF Viewer' }} />
-        <Stack.Screen name="about" options={{ headerShown: false }} />
-        <Stack.Screen name="derse-detail" options={{ headerShown: false }} />
-      </Stack>
+      <View style={{ flex: 1 }}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="pdf-viewer" options={{ title: 'PDF Viewer' }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="derse-detail" options={{ headerShown: false }} />
+        </Stack>
+        <MiniPlayer />
+      </View>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
