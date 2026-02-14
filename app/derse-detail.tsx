@@ -55,23 +55,33 @@ export default function DerseDetailScreen() {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            {/* Complementary Dark Slate Gradient - Different from Home but similar vibe */}
+            {/* Ultra-Premium Deep Midnight Gradient */}
             <LinearGradient
-                colors={['#0f172a', '#1e293b', '#0f172a']}
+                colors={['#020617', '#0f172a', '#020617']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
             />
 
+            {/* Subtle Abstract Light Overlay */}
+            <LinearGradient
+                colors={['transparent', 'rgba(56, 189, 248, 0.03)', 'transparent']}
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFill}
+            />
+
             <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-                <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
                     <View style={styles.headerContent}>
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
                             <Ionicons name="arrow-back" size={24} color={theme.text} />
                         </TouchableOpacity>
-                        <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>{category.title}</Text>
-                        <View style={styles.headerActions}>
-                            {/* Actions if needed */}
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>{category.title}</Text>
+                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '500' }}>
+                                {category.files.length} Files Available
+                            </Text>
                         </View>
                     </View>
                 </View>
@@ -104,38 +114,33 @@ export default function DerseDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0f172a',
+        backgroundColor: '#020617',
     },
     safeArea: {
         flex: 1,
     },
     header: {
-        padding: 16,
+        paddingTop: 12,
+        paddingBottom: 20,
+        paddingHorizontal: 20,
         borderBottomWidth: 1,
-        backgroundColor: 'transparent',
     },
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        width: '100%',
     },
     backButton: {
         marginRight: 16,
-        padding: 4,
+        padding: 8,
+        borderRadius: 14,
     },
     headerTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        flex: 1,
-        letterSpacing: -0.5,
-    },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        fontSize: 24,
+        fontWeight: '900',
+        letterSpacing: -1,
     },
     listContent: {
         paddingVertical: 10,
-        paddingBottom: 100, // Space for MiniPlayer
+        paddingBottom: 120, // More space for MiniPlayer
     },
 });

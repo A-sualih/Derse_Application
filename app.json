@@ -17,6 +17,8 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "audio",
+          "audio",
+          "audio",
           "audio"
         ]
       }
@@ -32,6 +34,11 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.sualih.NewDerseApp",
       "permissions": [
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_AUDIO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
         "WAKE_LOCK",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_AUDIO",
@@ -79,6 +86,9 @@
         "projectId": "9c73d4f7-915e-4f42-a950-64a69d27a37d"
       }
     },
-    "owner": "sualih"
+    "owner": "sualih",
+    "updates": {
+      "url": "https://u.expo.dev/9c73d4f7-915e-4f42-a950-64a69d27a37d"
+    }
   }
 }

@@ -204,10 +204,22 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     if (isCurrent) {
         return (
             <LinearGradient
-                colors={['#0f172a', '#1e293b', '#0f172a']} // Matches detail screen gradient, or could use MiniPlayer's green tint
+                colors={['rgba(30, 27, 75, 0.4)', 'rgba(56, 189, 248, 0.08)', 'rgba(30, 27, 75, 0.4)']}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.container, { borderBottomColor: theme.border, paddingVertical: 16 }]}
+                end={{ x: 1, y: 1 }}
+                style={[
+                    styles.container,
+                    {
+                        borderBottomColor: 'rgba(56, 189, 248, 0.2)',
+                        paddingVertical: 18,
+                        marginHorizontal: 8,
+                        borderRadius: 24,
+                        borderWidth: 1,
+                        borderColor: 'rgba(56, 189, 248, 0.1)',
+                        marginTop: 4,
+                        marginBottom: 4,
+                    }
+                ]}
             >
                 {renderContent()}
             </LinearGradient>
