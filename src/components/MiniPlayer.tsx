@@ -4,6 +4,7 @@ import { useAudio } from '@/src/context/AudioContext';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -58,69 +59,79 @@ export const MiniPlayer: React.FC = () => {
     const isWeb = Platform.OS === 'web';
 
     const formatTime = (millis: number) => {
-        const totalSeconds = Math.floor(millis / 1000);
+        const totalSeconds = Math.max(0, Math.floor((millis || 0) / 1000));
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     };
 
+    const TEXT_COLOR = '#FFFFFF';
+    const SECONDARY_TEXT_COLOR = '#bbf7d0'; // Light green text for secondary
+    const ICON_COLOR = '#FFFFFF';
+    const ACCENT_COLOR = '#4ade80'; // Bright green
+
     return (
         <View style={styles.outerContainer}>
             <BlurView
-                intensity={isDark ? 90 : 100}
-                tint={isDark ? 'dark' : 'light'}
-                style={[styles.container, { borderTopColor: theme.tint + '30' }]}
+                intensity={90}
+                tint="dark"
+                style={[styles.container]}
             >
-                {/* Vibrant Background Overlay */}
-                <View
-                    style={[
-                        StyleSheet.absoluteFill,
-                        {
-                            backgroundColor: theme.tint + (isDark ? '10' : '08'),
-                            opacity: 0.6
-                        }
-                    ]}
+                {/* Premium Black-Green Gradient Background */}
+                <LinearGradient
+                    colors={['#020617', '#14532d', '#020617']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                />
+
+                {/* Decorative Pattern / Shine */}
+                <LinearGradient
+                    colors={['transparent', 'rgba(74, 222, 128, 0.05)', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[StyleSheet.absoluteFill, { transform: [{ skewX: '-20deg' }] }]}
                 />
 
                 <View style={styles.header}>
                     <View style={styles.titleInfo}>
-                        <View style={[styles.iconBox, { backgroundColor: theme.tint + '15' }]}>
+                        <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
                             <Ionicons
                                 name="musical-note"
                                 size={20}
-                                color={theme.tint}
+                                color={ACCENT_COLOR}
                             />
                         </View>
-                        <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
+                        <Text style={[styles.title, { color: TEXT_COLOR }]} numberOfLines={1}>
                             {trackName}
                         </Text>
                     </View>
                     <View style={styles.headerButtons}>
                         <TouchableOpacity
                             onPress={handleSpeedCycle}
-                            style={[styles.speedBtn, { backgroundColor: theme.tint + '20' }]}
+                            style={[styles.speedBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
                         >
-                            <Text style={[styles.speedText, { color: theme.tint }]}>
+                            <Text style={[styles.speedText, { color: ACCENT_COLOR }]}>
                                 {playbackRate}x
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => setShowTrackList(true)}
-                            style={[styles.iconBtn, { backgroundColor: theme.border + '30' }]}
+                            style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
                         >
-                            <Ionicons name="list" size={24} color={theme.text} />
+                            <Ionicons name="list" size={24} color={TEXT_COLOR} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handlePlayPause}
-                            style={[styles.playBtn, { backgroundColor: theme.tint }]}
+                            style={[styles.playBtn, { backgroundColor: ACCENT_COLOR, shadowColor: ACCENT_COLOR }]}
                         >
                             {isLoading ? (
-                                <ActivityIndicator color="#fff" size="small" />
+                                <ActivityIndicator color="#000" size="small" />
                             ) : (
                                 <Ionicons
                                     name={isPlaying ? "pause" : "play"}
                                     size={28}
-                                    color="#fff"
+                                    color="#020617"
                                 />
                             )}
                         </TouchableOpacity>
@@ -130,49 +141,50 @@ export const MiniPlayer: React.FC = () => {
                 <View style={styles.controlsRow}>
                     <TouchableOpacity
                         onPress={previousTrack}
-                        style={[styles.skipBtn, { backgroundColor: theme.border + '20' }]}
+                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="play-skip-back" size={24} color={theme.text} />
+                        <Ionicons name="play-skip-back" size={24} color={TEXT_COLOR} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={() => skip(-10)}
-                        style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
+                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="refresh" size={20} color={theme.secondaryText} />
-                        <Text style={[styles.skipText, { color: theme.secondaryText }]}>-10s</Text>
+                        <Ionicons name="refresh" size={20} color={SECONDARY_TEXT_COLOR} />
+                        <Text style={[styles.skipText, { color: SECONDARY_TEXT_COLOR }]}>-10s</Text>
                     </TouchableOpacity>
 
                     <View style={{ flex: 1, marginHorizontal: 4 }}>
                         <Slider
                             style={styles.slider}
                             minimumValue={0}
-                            maximumValue={duration}
+                            maximumValue={duration > 0 ? duration : 100}
+                            disabled={duration === 0}
                             value={position}
                             onSlidingComplete={seekScroll}
-                            minimumTrackTintColor={theme.tint}
-                            maximumTrackTintColor={theme.border + '50'}
-                            thumbTintColor={theme.tint}
+                            minimumTrackTintColor={ACCENT_COLOR}
+                            maximumTrackTintColor={'rgba(255,255,255,0.2)'}
+                            thumbTintColor={ACCENT_COLOR}
                         />
                         <View style={styles.timeLabelContainer}>
-                            <Text style={[styles.timeLabel, { color: theme.secondaryText }]}>
+                            <Text style={[styles.timeLabel, { color: SECONDARY_TEXT_COLOR }]}>
                                 {formatTime(position)}
                             </Text>
-                            <Text style={[styles.timeLabel, { color: theme.secondaryText }]}>
-                                {formatTime(duration)}
+                            <Text style={[styles.timeLabel, { color: SECONDARY_TEXT_COLOR }]}>
+                                {duration > 0 ? formatTime(duration) : '--:--'}
                             </Text>
                         </View>
                     </View>
 
                     <TouchableOpacity
                         onPress={() => skip(10)}
-                        style={[styles.skipBtn, { backgroundColor: theme.border + '10' }]}
+                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
                     >
-                        <Ionicons name="refresh" size={20} color={theme.secondaryText} style={{ transform: [{ scaleX: -1 }] }} />
-                        <Text style={[styles.skipText, { color: theme.secondaryText }]}>+10s</Text>
+                        <Ionicons name="refresh" size={20} color={SECONDARY_TEXT_COLOR} style={{ transform: [{ scaleX: -1 }] }} />
+                        <Text style={[styles.skipText, { color: SECONDARY_TEXT_COLOR }]}>+10s</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity

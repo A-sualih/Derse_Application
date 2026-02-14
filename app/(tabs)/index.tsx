@@ -3,6 +3,7 @@ import { CategoryCard } from '@/src/components/CategoryCard';
 import { CATEGORIES } from '@/src/constants/mockData';
 import { useTheme } from '@/src/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -11,12 +12,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function App() {
   const router = useRouter();
   const { colorScheme, setThemePreference } = useTheme();
-  const theme = Colors[colorScheme];
+  // Force dark theme colors for the new design
+  const theme = { ...Colors['dark'], background: 'transparent', text: '#FFFFFF', secondaryText: '#bbf7d0', tint: '#4ade80', border: 'rgba(74, 222, 128, 0.2)' };
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
   const toggleTheme = () => {
+    // Theme toggle might be less relevant if we enforce a specific look, but keeping functionality
     setThemePreference(colorScheme === 'dark' ? 'light' : 'dark');
   };
 
@@ -32,109 +35,125 @@ export default function App() {
     : [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
-      <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}>
-        <View style={styles.headerContent}>
-          {isSearching ? (
-            <View style={styles.searchContainer}>
-              <TouchableOpacity onPress={() => { setIsSearching(false); setSearchQuery(''); }}>
-                <Ionicons name="arrow-back" size={24} color={theme.text} />
-              </TouchableOpacity>
-              <TextInput
-                style={[styles.searchInput, { color: theme.text, backgroundColor: colorScheme === 'dark' ? '#1a1a1b' : '#f0f0f0' }]}
-                placeholder="Search tracks..."
-                placeholderTextColor={theme.secondaryText}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoFocus
-              />
-            </View>
-          ) : (
-            <>
-              <Text style={[styles.headerTitle, { color: theme.text }]}>ደርሶች</Text>
-              <View style={styles.headerActions}>
-                <TouchableOpacity onPress={() => setIsSearching(true)} style={styles.iconButton}>
-                  <Ionicons name="search" size={24} color={theme.text} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/about')} style={styles.iconButton}>
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={24}
-                    color={theme.text}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
-                  <Ionicons
-                    name={colorScheme === 'dark' ? "sunny" : "moon"}
-                    size={24}
-                    color={theme.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-        </View>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      {/* Premium Black-Green Gradient Background */}
+      <LinearGradient
+        colors={['#020617', '#14532d', '#020617']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {isSearching && searchQuery.trim() !== '' ? (
-        <FlatList
-          data={filteredTracks}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.searchResultItem, { borderBottomColor: theme.border }]}
-              onPress={() => {
-                router.push({
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+          <View style={styles.headerContent}>
+            {isSearching ? (
+              <View style={styles.searchContainer}>
+                <TouchableOpacity onPress={() => { setIsSearching(false); setSearchQuery(''); }}>
+                  <Ionicons name="arrow-back" size={24} color={theme.text} />
+                </TouchableOpacity>
+                <TextInput
+                  style={[styles.searchInput, { color: theme.text, backgroundColor: 'rgba(255,255,255,0.1)' }]}
+                  placeholder="Search tracks..."
+                  placeholderTextColor={theme.secondaryText}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoFocus
+                />
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>ደርሶች</Text>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity onPress={() => setIsSearching(true)} style={styles.iconButton}>
+                    <Ionicons name="search" size={24} color={theme.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push('/about')} style={styles.iconButton}>
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={24}
+                      color={theme.text}
+                    />
+                  </TouchableOpacity>
+                  {/* Theme toggle kept but UI is now forced dark/green */}
+                  {/* <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+                    <Ionicons
+                      name={colorScheme === 'dark' ? "sunny" : "moon"}
+                      size={24}
+                      color={theme.text}
+                    />
+                  </TouchableOpacity> */}
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+
+        {isSearching && searchQuery.trim() !== '' ? (
+          <FlatList
+            data={filteredTracks}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.searchResultItem, { borderBottomColor: theme.border }]}
+                onPress={() => {
+                  router.push({
+                    pathname: '/derse-detail',
+                    params: { categoryId: CATEGORIES.find(c => c.files.some(f => f.id === item.id))?.id }
+                  });
+                }}
+              >
+                <View style={[styles.resultIcon, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                  <Ionicons name="musical-note" size={20} color={theme.tint} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.resultTitle, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
+                  <Text style={[styles.resultCategory, { color: theme.secondaryText }]}>{item.categoryTitle}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.border} />
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={{ color: theme.secondaryText }}>No tracks found matching "{searchQuery}"</Text>
+              </View>
+            }
+          />
+        ) : (
+          <FlatList
+            data={CATEGORIES}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <CategoryCard
+                category={item}
+                onPress={() => router.push({
                   pathname: '/derse-detail',
-                  params: { categoryId: CATEGORIES.find(c => c.files.some(f => f.id === item.id))?.id }
-                });
-              }}
-            >
-              <View style={[styles.resultIcon, { backgroundColor: theme.tint + '10' }]}>
-                <Ionicons name="musical-note" size={20} color={theme.tint} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.resultTitle, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
-                <Text style={[styles.resultCategory, { color: theme.secondaryText }]}>{item.categoryTitle}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={theme.border} />
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={{ color: theme.secondaryText }}>No tracks found matching "{searchQuery}"</Text>
-            </View>
-          }
-        />
-      ) : (
-        <FlatList
-          data={CATEGORIES}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <CategoryCard
-              category={item}
-              onPress={() => router.push({
-                pathname: '/derse-detail',
-                params: { categoryId: item.id }
-              })}
-            />
-          )}
-          contentContainerStyle={styles.listContent}
-        />
-      )}
-    </SafeAreaView>
+                  params: { categoryId: item.id }
+                })}
+              />
+            )}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#020617',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     padding: 16,
     borderBottomWidth: 1,
+    backgroundColor: 'transparent',
   },
   headerContent: {
     flexDirection: 'row',
@@ -143,9 +162,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
     flex: 1,
+    letterSpacing: -0.5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -154,12 +174,15 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 8,
     marginRight: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
   },
   themeToggle: {
     padding: 8,
   },
   listContent: {
     paddingVertical: 10,
+    paddingBottom: 100, // Space for MiniPlayer
   },
   searchContainer: {
     flex: 1,
@@ -169,8 +192,8 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 40,
-    borderRadius: 20,
+    height: 46,
+    borderRadius: 23,
     paddingHorizontal: 16,
     fontSize: 16,
   },

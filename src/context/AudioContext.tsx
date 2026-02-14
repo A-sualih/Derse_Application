@@ -50,14 +50,16 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         positionRef.current = position;
     }, [position]);
 
-    // Sync localIsPlaying with native status, but skip while loading or during transitions
+    // Sync localIsPlaying with native status
     useEffect(() => {
-        let isMounted = true;
-        if (!isLoading) {
-            setLocalIsPlaying(status.playing);
+        setLocalIsPlaying(status.playing);
+    }, [status.playing]);
+
+    useEffect(() => {
+        if (status.error) {
+            console.error('[AudioContext] Player status error:', status.error);
         }
-        return () => { isMounted = false; };
-    }, [status.playing, isLoading]);
+    }, [status.error]);
 
     useEffect(() => {
         // Configure audio mode for background playback and load saved playback rate
@@ -87,33 +89,63 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     useEffect(() => {
         if (!currentUri || !shouldAutoPlay.current) return;
 
-        // Check if we have a pending position to restore
-        if (pendingSeekPosition.current !== null && status.duration > 0) {
-            const posToRestore = pendingSeekPosition.current;
-            pendingSeekPosition.current = null;
+        // We wait for duration > 0 primarily to support seeking to a saved position.
+        const canSeek = status.duration > 0;
 
-            console.log('Restoring position:', posToRestore / 1000, 'seconds');
-            player.seekTo(posToRestore / 1000)
-                .then(() => {
-                    player.play();
-                    shouldAutoPlay.current = false;
-                    setIsLoading(false);
-                })
-                .catch((error) => {
-                    console.error('Error restoring position:', error);
-                    player.play();
-                    shouldAutoPlay.current = false;
-                    setIsLoading(false);
-                });
-        } else if (status.duration > 0) {
-            // No saved position, just play
-            player.play();
-            shouldAutoPlay.current = false;
-            setIsLoading(false);
+        if (canSeek) {
+            if (pendingSeekPosition.current !== null) {
+                const posToRestore = pendingSeekPosition.current;
+                pendingSeekPosition.current = null;
+
+                console.log(`[AudioContext] Restoring position for ${currentUri}: ${posToRestore / 1000}s`);
+                player.seekTo(posToRestore / 1000)
+                    .then(() => {
+                        player.play();
+                        shouldAutoPlay.current = false;
+                        setIsLoading(false);
+                    })
+                    .catch((error) => {
+                        console.error('[AudioContext] Seek error:', error);
+                        player.play();
+                        shouldAutoPlay.current = false;
+                        setIsLoading(false);
+                    });
+            } else {
+                console.log(`[AudioContext] Starting playback: ${currentUri}`);
+                player.play();
+                shouldAutoPlay.current = false;
+                setIsLoading(false);
+            }
+        } else if (!isLoading && shouldAutoPlay.current) {
+            // Fallback: if we are no longer in our 'isLoading' state but duration is still 0,
+            // try playing anyway as it might be a stream or a metadata-less file.
+            try {
+                player.play();
+                shouldAutoPlay.current = false;
+            } catch (e) {
+                console.warn('[AudioContext] Background play attempt failed:', e);
+            }
         }
-    }, [currentUri, status.duration, player]);
+    }, [currentUri, status.duration, player, isLoading]);
 
-    const getPersistenceKey = (uri: string) => `audio_pos_${encodeURIComponent(uri)} `;
+    // Fallback timer to stop loading if it hangs (e.g. broken file or network issue)
+    useEffect(() => {
+        let timeout: any;
+        if (isLoading) {
+            timeout = setTimeout(() => {
+                if (isLoading) {
+                    console.log('Playback seems to have hung or is taking too long, forcing loading state to false');
+                    setIsLoading(false);
+                    if (status.duration === 0) {
+                        console.warn('Audio duration is still 0. This might be a restriction or an invalid file.');
+                    }
+                }
+            }, 10000); // 10 seconds timeout
+        }
+        return () => clearTimeout(timeout);
+    }, [isLoading, status.duration]);
+
+    const getPersistenceKey = (uri: string) => `audio_pos_${encodeURIComponent(uri)}`;
 
     // Handle completion
     useEffect(() => {
@@ -196,33 +228,46 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 setCurrentQueue(queue);
             }
 
-            // FIRE AND FORGET PERSISTENCE CHECK (don't await)
+            // Finally set the URI to trigger loading
+            shouldAutoPlay.current = true;
+            setIsLoading(true);
+
+            // ENCODE URI: Crucial for files with spaces/special characters
+            let playUri = uri;
+            if (playUri.startsWith('file://')) {
+                const parts = playUri.split('file://');
+                playUri = 'file://' + encodeURI(parts[1]);
+            }
+
+            console.log(`[AudioContext] playSound request for: ${playUri}`);
+
+            // Check persistence and THEN set URI
             AsyncStorage.getItem(getPersistenceKey(uri))
                 .then(savedPos => {
                     if (savedPos) {
                         pendingSeekPosition.current = parseInt(savedPos, 10);
+                        console.log(`[AudioContext] Found saved position: ${pendingSeekPosition.current}ms`);
                     } else {
                         pendingSeekPosition.current = null;
                     }
+                    setCurrentUri(playUri);
                 })
-                .catch(e => console.error("Position restore error", e))
-                .finally(() => {
-                    // Finally set the URI to trigger loading
-                    shouldAutoPlay.current = true;
-                    setCurrentUri(uri);
+                .catch(e => {
+                    console.error("[AudioContext] Persistence error:", e);
+                    pendingSeekPosition.current = null;
+                    setCurrentUri(playUri);
                 });
 
         } catch (error: any) {
-            // ... (error handling)
             console.error('Error playing sound', error);
             setIsLoading(false);
-            if (Platform.OS === 'web' && uri.includes('drive.google.com')) {
-                const message = 'Google Drive audio links cannot stream directly in the browser. Open in new tab?';
+            if (Platform.OS === 'web' && (uri.includes('drive.google.com') || uri.includes('docs.google.com'))) {
+                const message = 'Google Drive audio links cannot stream directly in the browser due to CORS. Open in new tab?';
                 if (window.confirm(message)) {
                     Linking.openURL(uri);
                 }
             } else {
-                Alert.alert('Playback Error', `Error playing audio: ${error.message || error} `);
+                Alert.alert('Playback Error', `Error playing audio: ${error.message || error}`);
             }
         }
     };
@@ -250,7 +295,8 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const skip = async (seconds: number) => {
         try {
             const newPosition = position + seconds * 1000;
-            const clampedPosition = Math.max(0, Math.min(newPosition, duration));
+            // If duration is 0 (unknown), assume we can seek forward without limit
+            const clampedPosition = duration > 0 ? Math.max(0, Math.min(newPosition, duration)) : Math.max(0, newPosition);
             await player.seekTo(clampedPosition / 1000);
             if (currentUri) {
                 AsyncStorage.setItem(getPersistenceKey(currentUri), clampedPosition.toString());

@@ -1,19 +1,16 @@
 {
   "expo": {
-    "name": "የኪታብ ደርሶች - አዲስ",
-    "slug": "DerseApp-New",
+    "name": "ደርስ አፕሊኬሽን ",
+    "slug": "dersnewapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "derseapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "package": "com.sualih.DerseAppNew",
+    "package": "com.sualih.NewDerseApp",
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/67f97a96-cef1-4138-ab0d-80c903c2ba4a"
     },
     "ios": {
       "supportsTablet": true,
@@ -33,13 +30,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.sualih.DerseAppNew",
+      "package": "com.sualih.NewDerseApp",
       "permissions": [
-        "WAKE_LOCK",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_AUDIO",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "WAKE_LOCK",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_AUDIO",
@@ -84,9 +76,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "67f97a96-cef1-4138-ab0d-80c903c2ba4a"
+        "projectId": "9c73d4f7-915e-4f42-a950-64a69d27a37d"
       }
     },
-    "owner": "ebro"
+    "owner": "sualih"
   }
 }

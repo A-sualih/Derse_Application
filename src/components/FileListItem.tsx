@@ -4,6 +4,7 @@ import { useAudio } from '@/src/context/AudioContext';
 import { useFileDownloader } from '@/src/hooks/useFileDownloader';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -78,9 +79,9 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     };
 
     const formatTime = (millis: number) => {
-        const totalSeconds = millis / 1000;
+        const totalSeconds = Math.max(0, Math.floor((millis || 0) / 1000));
         const minutes = Math.floor(totalSeconds / 60);
-        const seconds = Math.floor(totalSeconds % 60);
+        const seconds = totalSeconds % 60;
         return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     };
 
@@ -138,25 +139,20 @@ export const FileListItem: React.FC<FileListItemProps> = ({
         );
     };
 
-    return (
-        <View style={[
-            styles.container,
-            {
-                backgroundColor: isCurrent ? theme.tint + '05' : theme.background,
-                borderBottomColor: theme.border
-            }
-        ]}>
+
+    const renderContent = () => (
+        <>
             <View style={styles.mainRow}>
-                <View style={[styles.iconBox, { backgroundColor: isCurrent ? theme.tint + '15' : theme.border + '50' }]}>
+                <View style={[styles.iconBox, { backgroundColor: isCurrent ? 'rgba(255,255,255,0.2)' : theme.border + '50' }]}>
                     <Ionicons
                         name={file.type === 'audio' ? 'play' : 'document'}
                         size={20}
-                        color={isCurrent ? theme.tint : theme.icon}
+                        color={isCurrent ? '#fff' : theme.icon}
                     />
                 </View>
                 <View style={styles.info}>
-                    <Text style={[styles.name, { color: isCurrent ? theme.tint : theme.text }]} numberOfLines={1}>{file.name}</Text>
-                    <Text style={[styles.status, { color: theme.secondaryText }]}>
+                    <Text style={[styles.name, { color: isCurrent ? '#fff' : theme.text }]} numberOfLines={1}>{file.name}</Text>
+                    <Text style={[styles.status, { color: isCurrent ? 'rgba(255,255,255,0.8)' : theme.secondaryText }]}>
                         {downloaded ? 'Ready to listen' : 'Available for download'}
                     </Text>
                 </View>
@@ -168,39 +164,65 @@ export const FileListItem: React.FC<FileListItemProps> = ({
                     <View style={styles.controlsRow}>
                         <TouchableOpacity
                             onPress={() => onSeek && onSeek(Math.max(0, position - 10000))}
-                            style={[styles.controlBtn, { backgroundColor: theme.tint + '10' }]}
+                            style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                         >
-                            <Ionicons name="refresh" size={18} color={theme.tint} />
-                            <Text style={[styles.controlText, { color: theme.tint }]}>-10s</Text>
+                            <Ionicons name="refresh" size={18} color="#fff" />
+                            <Text style={[styles.controlText, { color: '#fff' }]}>-10s</Text>
                         </TouchableOpacity>
 
                         <View style={{ flex: 1, marginHorizontal: 12 }}>
                             <Slider
                                 style={styles.slider}
                                 minimumValue={0}
-                                maximumValue={duration}
+                                maximumValue={duration > 0 ? duration : 100}
+                                disabled={duration === 0}
                                 value={position}
                                 onSlidingComplete={onSeek}
-                                minimumTrackTintColor={theme.tint}
-                                maximumTrackTintColor={theme.border}
-                                thumbTintColor={theme.tint}
+                                minimumTrackTintColor="#4ade80" // Bright green accent
+                                maximumTrackTintColor="rgba(255,255,255,0.3)"
+                                thumbTintColor="#4ade80"
                             />
                             <View style={styles.timeLabels}>
-                                <Text style={[styles.timeText, { color: theme.secondaryText }]}>{formatTime(position)}</Text>
-                                <Text style={[styles.timeText, { color: theme.secondaryText }]}>{formatTime(duration)}</Text>
+                                <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{formatTime(position)}</Text>
+                                <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{duration > 0 ? formatTime(duration) : '--:--'}</Text>
                             </View>
                         </View>
 
                         <TouchableOpacity
-                            onPress={() => onSeek && onSeek(Math.min(duration, position + 10000))}
-                            style={[styles.controlBtn, { backgroundColor: theme.tint + '10' }]}
+                            onPress={() => onSeek && onSeek(duration > 0 ? Math.min(duration, position + 10000) : position + 10000)}
+                            style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
                         >
-                            <Ionicons name="refresh" size={18} color={theme.tint} style={{ transform: [{ scaleX: -1 }] }} />
-                            <Text style={[styles.controlText, { color: theme.tint }]}>+10s</Text>
+                            <Ionicons name="refresh" size={18} color="#fff" style={{ transform: [{ scaleX: -1 }] }} />
+                            <Text style={[styles.controlText, { color: '#fff' }]}>+10s</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             )}
+        </>
+    );
+
+    if (isCurrent) {
+        return (
+            <LinearGradient
+                colors={['#0f172a', '#1e293b', '#0f172a']} // Matches detail screen gradient, or could use MiniPlayer's green tint
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.container, { borderBottomColor: theme.border, paddingVertical: 16 }]}
+            >
+                {renderContent()}
+            </LinearGradient>
+        );
+    }
+
+    return (
+        <View style={[
+            styles.container,
+            {
+                backgroundColor: theme.background,
+                borderBottomColor: theme.border
+            }
+        ]}>
+            {renderContent()}
         </View>
     );
 };
