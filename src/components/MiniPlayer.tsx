@@ -141,10 +141,10 @@ export const MiniPlayer: React.FC = () => {
                 <View style={styles.controlsRow}>
                     <TouchableOpacity
                         onPress={previousTrack}
-                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
+                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="play-skip-back" size={24} color={TEXT_COLOR} />
+                        <Ionicons name="play-skip-back" size={28} color={ACCENT_COLOR} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -189,10 +189,10 @@ export const MiniPlayer: React.FC = () => {
 
                     <TouchableOpacity
                         onPress={nextTrack}
-                        style={[styles.skipBtn, { backgroundColor: theme.border + '20' }]}
+                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="play-skip-forward" size={24} color={theme.text} />
+                        <Ionicons name="play-skip-forward" size={28} color={ACCENT_COLOR} />
                     </TouchableOpacity>
                 </View>
             </BlurView>
@@ -227,8 +227,19 @@ export const MiniPlayer: React.FC = () => {
                                             borderColor: item.url === currentUri ? theme.tint + '30' : 'transparent'
                                         }
                                     ]}
-                                    onPress={() => {
-                                        playSound(item.url, item.name, undefined, item.id);
+                                    onPress={async () => {
+                                        let playUri = item.url;
+                                        try {
+                                            const { checkFileExists, getLocalUri } = require('../utils/fileSystem');
+                                            const exists = await checkFileExists(item.name);
+                                            if (exists) {
+                                                const local = getLocalUri(item.name);
+                                                if (local) playUri = local;
+                                            }
+                                        } catch (e) {
+                                            console.error('Error checking local file for queue play', e);
+                                        }
+                                        playSound(playUri, item.name, undefined, item.id);
                                         setShowTrackList(false);
                                     }}
                                 >

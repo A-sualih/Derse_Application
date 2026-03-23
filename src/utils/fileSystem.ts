@@ -75,7 +75,6 @@ export const downloadFile = async (url: string, filename: string): Promise<strin
         // Only throw here if we really can't get a path
         throw new Error(`Document directory is not available. Platform: ${Platform.OS}.`);
     }
-
     console.log(`Attempting to download ${url} to ${fileUri}`);
     try {
         const downloadRes = await FileSystem.downloadAsync(url, fileUri);
