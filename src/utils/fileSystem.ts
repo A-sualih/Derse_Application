@@ -34,7 +34,6 @@ export const ensureDirectoryExists = async () => {
         console.warn('ensureDirectoryExists error:', e);
     }
 };
-
 export const getLocalUri = (filename: string) => {
     const dir = getFilesDirectory();
     // Expo FileSystem handles most characters fine, but we should ensure it's a valid URI part

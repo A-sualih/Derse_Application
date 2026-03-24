@@ -2,6 +2,7 @@ import { Category, DriveFile } from '../types';
 import { BEYQUNYA_FILES } from './beyqunyaData';
 import { MUTEMIMETUL_UJRUMYA_FILES } from './mutemimetulUjrumyaData';
 import { IRSHAD_FILES } from './irshadData';
+import { KASHFU_SHUBHA_FILES } from './kashfuShubhaData';
 
 // Helper to get direct download links from Google Drive
 const getDirectLink = (id: string) => `https://drive.google.com/uc?id=${id}&export=download`;
@@ -37,7 +38,7 @@ const HAMEWYA_FILES: DriveFile[] = [
 
 
 
-export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES];
+export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES];
 export const ALL_FILES = DRIVE_FILES;
 
 export const CATEGORIES: Category[] = [
@@ -64,5 +65,11 @@ export const CATEGORIES: Category[] = [
         title: 'ሙተሚመቱል ኡጅሩምያ',
         description: 'የሙተሚመቱል ኡጅሩምያ ደርስ ስብስቦች',
         files: MUTEMIMETUL_UJRUMYA_FILES,
+    },
+    {
+        id: 'kashfu-shubha',
+        title: 'ሸርህ ከሽፉ ሹብሀ ሊሸህ አል-ፈውዛን',
+        description: 'የሸርህ ከሽፉ ሹብሀ ሊሸህ አል-ፈውዛን ደርስ ስብስቦች',
+        files: KASHFU_SHUBHA_FILES,
     },
 ];
