@@ -65,7 +65,6 @@ export const downloadFile = async (url: string, filename: string): Promise<strin
         console.warn('Download on web: returning remote URL');
         return url;
     }
-
     // Ensure directory exists first, which checks root availability
     await ensureDirectoryExists();
 

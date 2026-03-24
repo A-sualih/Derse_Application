@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import { Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNotes } from '../context/NoteContext';
 import { useTheme } from '../context/ThemeContext';
-import { AddNoteModal } from './AddNoteModal';
+import { NoteModal } from './NoteModal';
 import { NoteList } from './NoteList';
+import { Note } from '../types/note';
 
 interface NotesManagerModalProps {
     visible: boolean;
@@ -20,13 +21,24 @@ interface NotesManagerModalProps {
 export function NotesManagerModal({ visible, onClose, currentFileMetadata }: NotesManagerModalProps) {
     const { colorScheme } = useTheme();
     const theme = Colors[colorScheme];
-    const { notes, addNote, deleteNote } = useNotes();
-    const [addModalVisible, setAddModalVisible] = useState(false);
+    const { notes, addNote, updateNote, deleteNote } = useNotes();
+    const [noteModalVisible, setNoteModalVisible] = useState(false);
     const [filterByFile, setFilterByFile] = useState(!!currentFileMetadata);
+    const [editingNote, setEditingNote] = useState<Note | null>(null);
 
     const filteredNotes = filterByFile && currentFileMetadata
         ? notes.filter(n => n.fileId === currentFileMetadata.fileId)
         : notes;
+
+    const handleEdit = (note: Note) => {
+        setEditingNote(note);
+        setNoteModalVisible(true);
+    };
+
+    const handleCloseModal = () => {
+        setNoteModalVisible(false);
+        setEditingNote(null);
+    };
 
     return (
         <Modal
@@ -38,7 +50,7 @@ export function NotesManagerModal({ visible, onClose, currentFileMetadata }: Not
             <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
                 <View style={[styles.header, { borderBottomColor: colorScheme === 'dark' ? '#333' : '#e0e0e0' }]}>
                     <View>
-                        <Text style={[styles.title, { color: theme.text }]}>Notes</Text>
+                        <Text style={[styles.title, { color: theme.text }]}>Study Reflections</Text>
                         {currentFileMetadata && (
                             <TouchableOpacity onPress={() => setFilterByFile(!filterByFile)}>
                                 <Text style={[styles.filterText, { color: theme.tint }]}>
@@ -52,19 +64,28 @@ export function NotesManagerModal({ visible, onClose, currentFileMetadata }: Not
                     </TouchableOpacity>
                 </View>
 
-                <NoteList notes={filteredNotes} onDelete={deleteNote} />
+                <NoteList 
+                    notes={filteredNotes} 
+                    onDelete={deleteNote} 
+                    onEdit={handleEdit}
+                />
 
                 <TouchableOpacity
                     style={[styles.fab, { backgroundColor: theme.tint }]}
-                    onPress={() => setAddModalVisible(true)}
+                    onPress={() => {
+                        setEditingNote(null);
+                        setNoteModalVisible(true);
+                    }}
                 >
                     <Ionicons name="add" size={32} color="#fff" />
                 </TouchableOpacity>
 
-                <AddNoteModal
-                    visible={addModalVisible}
-                    onClose={() => setAddModalVisible(false)}
+                <NoteModal
+                    visible={noteModalVisible}
+                    onClose={handleCloseModal}
                     onSave={addNote}
+                    onUpdate={updateNote}
+                    noteToEdit={editingNote}
                     metadata={currentFileMetadata}
                 />
             </SafeAreaView>
@@ -81,15 +102,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 16,
+        paddingHorizontal: 20,
         borderBottomWidth: 1,
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontWeight: '900',
     },
     filterText: {
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 13,
+        fontWeight: '700',
         marginTop: 2,
     },
     closeButton: {
@@ -97,17 +119,17 @@ const styles = StyleSheet.create({
     },
     fab: {
         position: 'absolute',
-        right: 20,
+        right: 24,
         bottom: 40,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
-        shadowRadius: 4.65,
+        shadowRadius: 10,
     },
 });

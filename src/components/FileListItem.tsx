@@ -15,6 +15,7 @@ interface FileListItemProps {
     onPlay?: (uri: string, title?: string, queue?: any[], fileId?: string) => void;
     onPause?: () => void;
     onSeek?: (value: number) => void;
+    onAddNote?: (file: DriveFile) => void;
     isPlaying?: boolean;
     isCurrent?: boolean;
     isAudioLoading?: boolean;
@@ -27,6 +28,7 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     onPlay,
     onPause,
     onSeek,
+    onAddNote,
     isPlaying,
     isCurrent,
     isAudioLoading,
@@ -105,6 +107,13 @@ export const FileListItem: React.FC<FileListItemProps> = ({
         // File is downloaded
         return (
             <View style={styles.actions}>
+                <TouchableOpacity 
+                    onPress={() => onAddNote?.(file)} 
+                    style={[styles.actionButton, { marginRight: 8 }]}
+                >
+                    <Ionicons name="create-outline" size={26} color={theme.tint} />
+                </TouchableOpacity>
+
                 {file.type === 'audio' ? (
                     <>
                         <TouchableOpacity onPress={handleAudioPress} style={styles.actionButton}>

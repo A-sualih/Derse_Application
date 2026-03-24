@@ -5,6 +5,7 @@ import { Note } from '../types/note';
 interface NoteContextType {
     notes: Note[];
     addNote: (content: string, metadata?: Partial<Pick<Note, 'fileId' | 'fileName' | 'pageNumber'>>) => Promise<void>;
+    updateNote: (id: string, content: string) => Promise<void>;
     deleteNote: (id: string) => Promise<void>;
 }
 
@@ -48,6 +49,14 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
         await saveNotes(updatedNotes);
     };
 
+    const updateNote = async (id: string, content: string) => {
+        const updatedNotes = notes.map(note => 
+            note.id === id ? { ...note, content, updatedAt: Date.now() } : note
+        );
+        setNotes(updatedNotes);
+        await saveNotes(updatedNotes);
+    };
+
     const deleteNote = async (id: string) => {
         const updatedNotes = notes.filter(note => note.id !== id);
         setNotes(updatedNotes);
@@ -55,7 +64,7 @@ export function NoteProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <NoteContext.Provider value={{ notes, addNote, deleteNote }}>
+        <NoteContext.Provider value={{ notes, addNote, updateNote, deleteNote }}>
             {children}
         </NoteContext.Provider>
     );

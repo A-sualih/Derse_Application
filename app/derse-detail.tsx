@@ -1,15 +1,21 @@
 import { FileListItem } from '@/src/components/FileListItem';
 import { CATEGORIES } from '@/src/constants/mockData';
+import { NoteModal } from '@/src/components/NoteModal';
 import { useAudioPlayer } from '@/src/hooks/useAudioPlayer';
+import { useNotes } from '@/src/context/NoteContext';
+import { DriveFile } from '@/src/types';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DerseDetailScreen() {
     const router = useRouter();
     const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
+    const { addNote } = useNotes();
+    const [noteFile, setNoteFile] = useState<DriveFile | null>(null);
 
     // Fixed dark theme colors for consistency with new design
     const theme = {
@@ -32,8 +38,6 @@ export default function DerseDetailScreen() {
         isLoading,
         position,
         duration,
-        playbackRate,
-        setPlaybackRate
     } = useAudioPlayer();
 
     if (!category) {
@@ -101,12 +105,23 @@ export default function DerseDetailScreen() {
                                 isAudioLoading={isLoading}
                                 position={isItemCurrent ? position : 0}
                                 duration={isItemCurrent ? duration : 0}
+                                onAddNote={(file) => setNoteFile(file)}
                             />
                         );
                     }}
                     contentContainerStyle={styles.listContent}
                 />
             </SafeAreaView>
+
+            <NoteModal
+                visible={!!noteFile}
+                onClose={() => setNoteFile(null)}
+                onSave={addNote}
+                metadata={noteFile ? {
+                    fileId: noteFile.id,
+                    fileName: noteFile.name
+                } : undefined}
+            />
         </View>
     );
 }

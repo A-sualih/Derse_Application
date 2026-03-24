@@ -3,6 +3,7 @@ import { BEYQUNYA_FILES } from './beyqunyaData';
 import { MUTEMIMETUL_UJRUMYA_FILES } from './mutemimetulUjrumyaData';
 import { IRSHAD_FILES } from './irshadData';
 import { KASHFU_SHUBHA_FILES } from './kashfuShubhaData';
+import { KHUZ_AQIDEK_FILES } from './khuzAqidekData';
 
 // Helper to get direct download links from Google Drive
 const getDirectLink = (id: string) => `https://drive.google.com/uc?id=${id}&export=download`;
@@ -38,10 +39,16 @@ const HAMEWYA_FILES: DriveFile[] = [
 
 
 
-export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES];
+export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES];
 export const ALL_FILES = DRIVE_FILES;
 
 export const CATEGORIES: Category[] = [
+    {
+        id: 'khuz-aqidek',
+        title: 'ኹዝ አቂደተክ',
+        description: 'የኹዝ አቂደተክ ደርስ ስብስቦች',
+        files: KHUZ_AQIDEK_FILES,
+    },
     {
         id: 'hamewya',
         title: 'ሃመውያ',
@@ -73,3 +80,4 @@ export const CATEGORIES: Category[] = [
         files: KASHFU_SHUBHA_FILES,
     },
 ];
+

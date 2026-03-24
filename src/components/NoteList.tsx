@@ -8,9 +8,10 @@ import { Note } from '../types/note';
 interface NoteListProps {
     notes: Note[];
     onDelete: (id: string) => void;
+    onEdit: (note: Note) => void;
 }
 
-export function NoteList({ notes, onDelete }: NoteListProps) {
+export function NoteList({ notes, onDelete, onEdit }: NoteListProps) {
     const { colorScheme } = useTheme();
     const theme = Colors[colorScheme];
 
@@ -27,12 +28,12 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
     if (notes.length === 0) {
         return (
             <View style={styles.emptyContainer}>
-                <View style={[styles.emptyIconBox, { backgroundColor: theme.border + '50' }]}>
-                    <Ionicons name="document-text-outline" size={48} color={theme.icon} />
+                <View style={[styles.emptyIconBox, { backgroundColor: theme.tint + '10' }]}>
+                    <Ionicons name="document-text" size={56} color={theme.tint} />
                 </View>
-                <Text style={[styles.emptyTitle, { color: theme.text }]}>No notes yet</Text>
+                <Text style={[styles.emptyTitle, { color: theme.text }]}>Start Your Reflection</Text>
                 <Text style={[styles.emptySub, { color: theme.secondaryText }]}>
-                    Your study notes will appear here.
+                    Capture your study journey. Your notes for each Derse will organize here beautifully.
                 </Text>
             </View>
         );
@@ -46,31 +47,46 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
                 <View style={[styles.noteItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-                    <View style={styles.noteContent}>
-                        <Text style={[styles.noteText, { color: theme.text }]}>{item.content}</Text>
-                        <View style={styles.noteMetadata}>
-                            <View style={styles.dateBox}>
-                                <Ionicons name="time-outline" size={12} color={theme.secondaryText} style={{ marginRight: 4 }} />
-                                <Text style={[styles.dateText, { color: theme.secondaryText }]}>
-                                    {formatDate(item.createdAt)}
-                                </Text>
-                            </View>
-                            {item.fileName && (
-                                <View style={[styles.badge, { backgroundColor: theme.tint + '10' }]}>
-                                    <Text style={[styles.contextText, { color: theme.tint }]} numberOfLines={1}>
-                                        {item.fileName}{item.pageNumber ? ` • p. ${item.pageNumber}` : ''}
-                                    </Text>
-                                </View>
-                            )}
+                    {/* Header: Date and Source (if any) */}
+                    <View style={styles.noteHeader}>
+                        <View style={styles.dateInfo}>
+                           <Ionicons name="calendar-outline" size={14} color={theme.secondaryText} style={{ marginRight: 6 }} />
+                           <Text style={[styles.dateText, { color: theme.secondaryText }]}>
+                               {formatDate(item.createdAt)}
+                               {item.updatedAt ? ' (Edited)' : ''}
+                           </Text>
                         </View>
+                        {item.fileName && (
+                           <View style={[styles.sourceBadge, { backgroundColor: theme.tint + '10' }]}>
+                               <Ionicons name="book-outline" size={12} color={theme.tint} style={{ marginRight: 4 }} />
+                               <Text style={[styles.sourceText, { color: theme.tint }]} numberOfLines={1}>
+                                   {item.fileName}{item.pageNumber ? ` • p. ${item.pageNumber}` : ''}
+                               </Text>
+                           </View>
+                        )}
                     </View>
-                    <TouchableOpacity
-                        onPress={() => onDelete(item.id)}
-                        style={[styles.deleteButton, { backgroundColor: '#FF3B3010' }]}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <Ionicons name="trash-outline" size={18} color="#FF3B30" />
-                    </TouchableOpacity>
+
+                    {/* Content */}
+                    <Text style={[styles.noteText, { color: theme.text }]}>{item.content}</Text>
+
+                    {/* Actions */}
+                    <View style={[styles.noteActions, { borderTopColor: theme.border + '50' }]}>
+                        <TouchableOpacity
+                            onPress={() => onEdit(item)}
+                            style={styles.actionBtn}
+                        >
+                            <Ionicons name="create-outline" size={20} color={theme.tint} />
+                            <Text style={[styles.actionLabel, { color: theme.tint }]}>Edit</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => onDelete(item.id)}
+                            style={styles.actionBtn}
+                        >
+                            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                            <Text style={[styles.actionLabel, { color: '#FF3B30' }]}>Delete</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             )}
         />
@@ -79,85 +95,94 @@ export function NoteList({ notes, onDelete }: NoteListProps) {
 
 const styles = StyleSheet.create({
     listContent: {
-        padding: 16,
-        paddingBottom: 100,
+        padding: 20,
+        paddingBottom: 120, // More space for Floating button
     },
     noteItem: {
-        flexDirection: 'row',
-        padding: 16,
-        borderRadius: 20,
-        marginBottom: 16,
+        borderRadius: 28,
+        marginBottom: 20,
         borderWidth: 1,
-        alignItems: 'flex-start',
-        elevation: 2,
+        borderBottomWidth: 4, // Professional "lifted" look
+        overflow: 'hidden',
+        padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
     },
-    noteContent: {
-        flex: 1,
-        marginRight: 10,
-    },
-    noteText: {
-        fontSize: 16,
-        marginBottom: 12,
-        lineHeight: 24,
-        fontWeight: '500',
-    },
-    noteMetadata: {
+    noteHeader: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        gap: 8,
+        marginBottom: 16,
     },
-    dateBox: {
+    dateInfo: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     dateText: {
-        fontSize: 12,
-        fontWeight: '500',
-    },
-    badge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-        maxWidth: '80%',
-    },
-    contextText: {
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: '600',
     },
-    deleteButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
+    sourceBadge: {
+        flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 12,
+        maxWidth: '50%',
+    },
+    sourceText: {
+        fontSize: 11,
+        fontWeight: '800',
+    },
+    noteText: {
+        fontSize: 17,
+        lineHeight: 26,
+        fontWeight: '500',
+        marginBottom: 20,
+    },
+    noteActions: {
+        flexDirection: 'row',
+        borderTopWidth: 1,
+        paddingTop: 16,
+        gap: 20,
+    },
+    actionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    actionLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        marginLeft: 6,
     },
     emptyContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 40,
+        paddingBottom: 60,
     },
     emptyIconBox: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 28,
     },
     emptyTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        marginBottom: 8,
+        fontSize: 24,
+        fontWeight: '900',
+        marginBottom: 12,
+        textAlign: 'center',
     },
     emptySub: {
-        fontSize: 15,
+        fontSize: 16,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 24,
+        fontWeight: '500',
     },
 });
