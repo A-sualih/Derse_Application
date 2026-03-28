@@ -5,6 +5,8 @@ import { IRSHAD_FILES } from './irshadData';
 import { KASHFU_SHUBHA_FILES } from './kashfuShubhaData';
 import { KHUZ_AQIDEK_FILES } from './khuzAqidekData';
 import { AL_WAJIBATH_FILES } from './alWajibathData';
+import { TENBIHAT_FILES } from './tenbihatData';
+
 
 
 // Helper to get direct download links from Google Drive
@@ -41,7 +43,7 @@ const HAMEWYA_FILES: DriveFile[] = [
 
 
 
-export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES];
+export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES, ...TENBIHAT_FILES];
 export const ALL_FILES = DRIVE_FILES;
 
 export const CATEGORIES: Category[] = [
@@ -87,5 +89,12 @@ export const CATEGORIES: Category[] = [
         description: 'የአል ዋጂባት ደርስ ስብስቦች',
         files: AL_WAJIBATH_FILES,
     },
+    {
+        id: 'tenbihat',
+        title: 'ተንቢሃት',
+        description: 'የተንቢሃት ደርስ ስብስቦች',
+        files: TENBIHAT_FILES,
+    },
+
 ];
 
