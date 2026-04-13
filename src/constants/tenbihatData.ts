@@ -7,7 +7,7 @@ export const TENBIHAT_FILES: DriveFile[] = [
         id: 'tenbihat-pdf',
         name: 'ተንቢሃት.pdf',
         type: 'pdf',
-        url: getDirectLink('1aPqaIfGHk6fArGH2xPsSEWimJId3WNTs'),
+        url: getDirectLink('1Mxg5VozBV_qMCQUlmunKTkK43ZBpCUmX'),
     },
     { id: 'tenbihat-1', name: 'ተንቢሃት ደርስ 1.mp3', type: 'audio', url: getDirectLink('1nwBVsAVgKI20kqkVY_s-PRGyqOG4XH7x') },
     { id: 'tenbihat-2', name: 'ተንቢሃት ደርስ 2.mp3', type: 'audio', url: getDirectLink('13P2nafJlxeq_xuFFeGRZZvZ0dbla5hhz') },

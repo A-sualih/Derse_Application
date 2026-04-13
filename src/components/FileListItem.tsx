@@ -107,8 +107,8 @@ export const FileListItem: React.FC<FileListItemProps> = ({
         // File is downloaded
         return (
             <View style={styles.actions}>
-                <TouchableOpacity 
-                    onPress={() => onAddNote?.(file)} 
+                <TouchableOpacity
+                    onPress={() => onAddNote?.(file)}
                     style={[styles.actionButton, { marginRight: 8 }]}
                 >
                     <Ionicons name="create-outline" size={26} color={theme.tint} />
