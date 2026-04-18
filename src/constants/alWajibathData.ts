@@ -7,7 +7,7 @@ export const AL_WAJIBATH_FILES: DriveFile[] = [
         id: 'al-wajibath-pdf',
         name: 'አል ዋጂባት.pdf',
         type: 'pdf',
-        url: getDirectLink('1-6Dh6lajxP4WhA2rFtio297QI-pzOImK'),
+        url: getDirectLink('1j-FBVVixAPZUES9Bn6lIVMGoiKx843Pd'),
     },
     { id: 'al-wajibath-1', name: 'አል ዋጂባት ደርስ 1.mp3', type: 'audio', url: getDirectLink('1syZU5JQw7Y7dxnxe8Ub1I38tJ3OMekxi') },
     { id: 'al-wajibath-2', name: 'አል ዋጂባት ደርስ 2.mp3', type: 'audio', url: getDirectLink('1Ksi0yKWkbnEkyuV_7t6yRke3qLme0UIk') },
