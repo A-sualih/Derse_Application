@@ -8,6 +8,8 @@ import { MUTEMIMETUL_UJRUMYA_FILES } from './mutemimetulUjrumyaData';
 import { TENBIHAT_FILES } from './tenbihatData';
 import { TUHFETU_FILES } from './tuhfetuData';
 import { DURUSU_MUHIMA_FILES } from './durusuMuhimaData';
+import { HIDAYETUL_MUSTEFID_FILES } from './hidayetulMustefidData';
+
 
 
 
@@ -46,7 +48,7 @@ const HAMEWYA_FILES: DriveFile[] = [
 
 
 
-export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES, ...TENBIHAT_FILES, ...TUHFETU_FILES, ...DURUSU_MUHIMA_FILES];
+export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES, ...TENBIHAT_FILES, ...TUHFETU_FILES, ...DURUSU_MUHIMA_FILES, ...HIDAYETUL_MUSTEFID_FILES];
 export const ALL_FILES = DRIVE_FILES;
 
 export const CATEGORIES: Category[] = [
@@ -110,7 +112,13 @@ export const CATEGORIES: Category[] = [
         description: 'የዱሩሱል ሙሂማ ደርስ ስብስቦች በኡስታዝ አቡ ኒብራስ',
         files: DURUSU_MUHIMA_FILES,
     },
+    {
+        id: 'hidayetul-mustefid',
+        title: 'ሂዳየቱል ሙስተፊድ',
+        description: 'የሂዳየቱል ሙስተፊድ ደርስ ስብስቦች',
+        files: HIDAYETUL_MUSTEFID_FILES,
+    },
+
 
 
 ];
-

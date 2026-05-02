@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { useUser } from '@/src/context/UserContext';
+import { useOTAUpdate } from '@/src/hooks/useOTAUpdate';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -11,6 +12,7 @@ export default function AboutScreen() {
     const router = useRouter();
     const { userProfile, saveProfile } = useUser();
     const { colorScheme } = useTheme();
+    const { checkManually, isChecking } = useOTAUpdate();
     const theme = Colors[colorScheme];
 
     const [name, setName] = useState('');
@@ -133,6 +135,17 @@ export default function AboutScreen() {
                     >
                         <Ionicons name="share-social" size={20} color={theme.tint} style={{ marginRight: 8 }} />
                         <Text style={[styles.actionBtnText, { color: theme.tint }]}>Share Application</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: theme.border + '20', marginTop: 12 }]}
+                        onPress={checkManually}
+                        disabled={isChecking}
+                    >
+                        <Ionicons name="refresh" size={20} color={theme.text} style={{ marginRight: 8 }} />
+                        <Text style={[styles.actionBtnText, { color: theme.text }]}>
+                            {isChecking ? 'Checking for updates...' : 'Check for Updates'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 

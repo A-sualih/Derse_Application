@@ -13,6 +13,7 @@ import { ThemeProvider as AppThemeProvider } from '../src/context/ThemeContext';
 
 import { NoteProvider } from '../src/context/NoteContext';
 import { UserProvider } from '../src/context/UserContext';
+import { useOTAUpdate } from '../src/hooks/useOTAUpdate';
 
 
 export const unstable_settings = {
@@ -36,6 +37,14 @@ export default function RootLayout() {
 
 function LayoutContent() {
   const colorScheme = useColorScheme();
+  const { onFetchUpdateAsync } = useOTAUpdate();
+
+  React.useEffect(() => {
+    if (!__DEV__) {
+      onFetchUpdateAsync();
+    }
+  }, []);
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <View style={{ flex: 1 }}>
