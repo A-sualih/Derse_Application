@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useBackgroundTasks } from '@/src/context/BackgroundTaskContext';
 
 export default function App() {
   const router = useRouter();
@@ -17,6 +18,12 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+
+  const { runSimulation } = useBackgroundTasks();
+
+  const handleSync = () => {
+    runSimulation('Syncing Library...', 'sync');
+  };
 
   const toggleTheme = () => {
     // Theme toggle might be less relevant if we enforce a specific look, but keeping functionality
@@ -75,6 +82,9 @@ export default function App() {
                       size={24}
                       color={theme.text}
                     />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSync} style={styles.iconButton}>
+                    <Ionicons name="cloud-upload-outline" size={24} color={theme.tint} />
                   </TouchableOpacity>
                   {/* Theme toggle kept but UI is now forced dark/green */}
                   {/* <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>

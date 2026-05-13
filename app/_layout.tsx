@@ -14,6 +14,9 @@ import { ThemeProvider as AppThemeProvider } from '../src/context/ThemeContext';
 import { NoteProvider } from '../src/context/NoteContext';
 import { UserProvider } from '../src/context/UserContext';
 import { useOTAUpdate } from '../src/hooks/useOTAUpdate';
+import { BackgroundTaskProvider } from '../src/context/BackgroundTaskContext';
+import { FloatingProgressWidget } from '../src/components/background/FloatingProgressWidget';
+import { BackgroundTaskOverlay } from '../src/components/background/BackgroundTaskOverlay';
 
 
 export const unstable_settings = {
@@ -26,7 +29,9 @@ export default function RootLayout() {
       <AudioProvider>
         <UserProvider>
           <NoteProvider>
-            <LayoutContent />
+            <BackgroundTaskProvider>
+              <LayoutContent />
+            </BackgroundTaskProvider>
           </NoteProvider>
         </UserProvider>
       </AudioProvider>
@@ -55,9 +60,20 @@ function LayoutContent() {
           <Stack.Screen name="derse-detail" options={{ headerShown: false }} />
         </Stack>
         <MiniPlayer />
+        <BackgroundUI />
       </View>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
 }
 
+function BackgroundUI() {
+  const [showOverlay, setShowOverlay] = React.useState(false);
+  
+  return (
+    <>
+      <FloatingProgressWidget onPress={() => setShowOverlay(true)} />
+      <BackgroundTaskOverlay visible={showOverlay} onClose={() => setShowOverlay(false)} />
+    </>
+  );
+}
