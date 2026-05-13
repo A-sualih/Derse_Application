@@ -17,6 +17,7 @@ import { useOTAUpdate } from '../src/hooks/useOTAUpdate';
 import { BackgroundTaskProvider } from '../src/context/BackgroundTaskContext';
 import { FloatingProgressWidget } from '../src/components/background/FloatingProgressWidget';
 import { BackgroundTaskOverlay } from '../src/components/background/BackgroundTaskOverlay';
+import { useAppLifecycle } from '../src/hooks/useAppLifecycle';
 
 
 export const unstable_settings = {
@@ -43,12 +44,14 @@ export default function RootLayout() {
 function LayoutContent() {
   const colorScheme = useColorScheme();
   const { onFetchUpdateAsync } = useOTAUpdate();
+  const { currentState } = useAppLifecycle();
 
   React.useEffect(() => {
+    console.log(`[Root] App is in state: ${currentState}`);
     if (!__DEV__) {
       onFetchUpdateAsync();
     }
-  }, []);
+  }, [currentState]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

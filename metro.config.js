@@ -11,7 +11,9 @@ config.resolver.sourceExts = ['js', 'jsx', 'json', 'ts', 'tsx', 'mjs', 'cjs'];
 if (process.env.EXPO_PUBLIC_PLATFORM === 'web') {
     config.resolver.blacklistRE = [
         /node_modules\/react-native-pdf\/.*/,
-        /node_modules\/react-native-blob-util\/.*/
+        /node_modules\/react-native-blob-util\/.*/,
+        /node_modules\/react-native-mmkv\/.*/,
+        /node_modules\/react-native-worklets-core\/.*/
     ];
 }
 

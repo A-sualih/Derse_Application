@@ -5,46 +5,87 @@ import { useTheme } from '@/src/context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBackgroundTasks } from '@/src/context/BackgroundTaskContext';
+import { useAppStore } from '@/src/store/appStore';
 
 export default function App() {
   const router = useRouter();
-  const { colorScheme, setThemePreference } = useTheme();
-  // Force dark theme colors for the new design
-  const theme = { ...Colors['dark'], background: 'transparent', text: '#FFFFFF', secondaryText: '#bbf7d0', tint: '#4ade80', border: 'rgba(74, 222, 128, 0.2)' };
+  const { colorScheme } = useTheme();
+  const setLastScreen = useAppStore(state => state.setLastScreen);
+  
+  // Track last screen for persistence
+  useEffect(() => {
+    setLastScreen('home');
+  }, []);
+
+  const theme = useMemo(() => ({ 
+    ...Colors['dark'], 
+    background: 'transparent', 
+    text: '#FFFFFF', 
+    secondaryText: '#bbf7d0', 
+    tint: '#4ade80', 
+    border: 'rgba(74, 222, 128, 0.2)' 
+  }), []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
   const { runSimulation } = useBackgroundTasks();
 
-  const handleSync = () => {
+  const handleSync = useCallback(() => {
     runSimulation('Syncing Library...', 'sync');
-  };
+  }, [runSimulation]);
 
-  const toggleTheme = () => {
-    // Theme toggle might be less relevant if we enforce a specific look, but keeping functionality
-    setThemePreference(colorScheme === 'dark' ? 'light' : 'dark');
-  };
+  const allTracks = useMemo(() => 
+    CATEGORIES.flatMap(cat =>
+      cat.files.filter(f => f.type === 'audio').map(f => ({ ...f, categoryTitle: cat.title }))
+    ), []);
 
-  const allTracks = CATEGORIES.flatMap(cat =>
-    cat.files.filter(f => f.type === 'audio').map(f => ({ ...f, categoryTitle: cat.title }))
-  );
+  const filteredTracks = useMemo(() => 
+    searchQuery.trim()
+      ? allTracks.filter(track =>
+        track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.categoryTitle.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      : [], [searchQuery, allTracks]);
 
-  const filteredTracks = searchQuery.trim()
-    ? allTracks.filter(track =>
-      track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      track.categoryTitle.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    : [];
+  const renderSearchItem = useCallback(({ item }: { item: any }) => (
+    <TouchableOpacity
+      style={[styles.searchResultItem, { borderBottomColor: theme.border }]}
+      onPress={() => {
+        router.push({
+          pathname: '/derse-detail',
+          params: { categoryId: CATEGORIES.find(c => c.files.some(f => f.id === item.id))?.id }
+        });
+      }}
+    >
+      <View style={[styles.resultIcon, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+        <Ionicons name="musical-note" size={20} color={theme.tint} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.resultTitle, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
+        <Text style={[styles.resultCategory, { color: theme.secondaryText }]}>{item.categoryTitle}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={theme.border} />
+    </TouchableOpacity>
+  ), [theme, router]);
+
+  const renderCategoryItem = useCallback(({ item }: { item: any }) => (
+    <CategoryCard
+      category={item}
+      onPress={() => router.push({
+        pathname: '/derse-detail',
+        params: { categoryId: item.id }
+      })}
+    />
+  ), [router]);
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      {/* Premium Black-Green Gradient Background */}
       <LinearGradient
         colors={['#020617', '#14532d', '#020617']}
         start={{ x: 0, y: 0 }}
@@ -86,14 +127,6 @@ export default function App() {
                   <TouchableOpacity onPress={handleSync} style={styles.iconButton}>
                     <Ionicons name="cloud-upload-outline" size={24} color={theme.tint} />
                   </TouchableOpacity>
-                  {/* Theme toggle kept but UI is now forced dark/green */}
-                  {/* <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
-                    <Ionicons
-                      name={colorScheme === 'dark' ? "sunny" : "moon"}
-                      size={24}
-                      color={theme.text}
-                    />
-                  </TouchableOpacity> */}
                 </View>
               </>
             )}
@@ -104,27 +137,12 @@ export default function App() {
           <FlatList
             data={filteredTracks}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.searchResultItem, { borderBottomColor: theme.border }]}
-                onPress={() => {
-                  router.push({
-                    pathname: '/derse-detail',
-                    params: { categoryId: CATEGORIES.find(c => c.files.some(f => f.id === item.id))?.id }
-                  });
-                }}
-              >
-                <View style={[styles.resultIcon, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                  <Ionicons name="musical-note" size={20} color={theme.tint} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.resultTitle, { color: theme.text }]} numberOfLines={1}>{item.name}</Text>
-                  <Text style={[styles.resultCategory, { color: theme.secondaryText }]}>{item.categoryTitle}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.border} />
-              </TouchableOpacity>
-            )}
+            renderItem={renderSearchItem}
             contentContainerStyle={styles.listContent}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={true}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={{ color: theme.secondaryText }}>No tracks found matching "{searchQuery}"</Text>
@@ -135,16 +153,12 @@ export default function App() {
           <FlatList
             data={CATEGORIES}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <CategoryCard
-                category={item}
-                onPress={() => router.push({
-                  pathname: '/derse-detail',
-                  params: { categoryId: item.id }
-                })}
-              />
-            )}
+            renderItem={renderCategoryItem}
             contentContainerStyle={styles.listContent}
+            initialNumToRender={6}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={true}
           />
         )}
       </SafeAreaView>
@@ -187,12 +201,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
   },
-  themeToggle: {
-    padding: 8,
-  },
   listContent: {
     paddingVertical: 10,
-    paddingBottom: 100, // Space for MiniPlayer
+    paddingBottom: 100,
   },
   searchContainer: {
     flex: 1,

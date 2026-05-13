@@ -9,6 +9,8 @@ import { TENBIHAT_FILES } from './tenbihatData';
 import { TUHFETU_FILES } from './tuhfetuData';
 import { DURUSU_MUHIMA_FILES } from './durusuMuhimaData';
 import { HIDAYETUL_MUSTEFID_FILES } from './hidayetulMustefidData';
+import { ANUSUHU_SEDID_PART1_FILES } from './anusuhuSedidPart1Data';
+import { ANUSUHU_SEDID_PART2_FILES } from './anusuhuSedidPart2Data';
 
 
 
@@ -48,7 +50,7 @@ const HAMEWYA_FILES: DriveFile[] = [
 
 
 
-export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES, ...TENBIHAT_FILES, ...TUHFETU_FILES, ...DURUSU_MUHIMA_FILES, ...HIDAYETUL_MUSTEFID_FILES];
+export const DRIVE_FILES = [...HAMEWYA_FILES, ...IRSHAD_FILES, ...BEYQUNYA_FILES, ...MUTEMIMETUL_UJRUMYA_FILES, ...KASHFU_SHUBHA_FILES, ...KHUZ_AQIDEK_FILES, ...AL_WAJIBATH_FILES, ...TENBIHAT_FILES, ...TUHFETU_FILES, ...DURUSU_MUHIMA_FILES, ...HIDAYETUL_MUSTEFID_FILES, ...ANUSUHU_SEDID_PART1_FILES, ...ANUSUHU_SEDID_PART2_FILES];
 export const ALL_FILES = DRIVE_FILES;
 
 export const CATEGORIES: Category[] = [
@@ -117,6 +119,18 @@ export const CATEGORIES: Category[] = [
         title: 'ሂዳየቱል ሙስተፊድ',
         description: 'የሂዳየቱል ሙስተፊድ ደርስ ስብስቦች',
         files: HIDAYETUL_MUSTEFID_FILES,
+    },
+    {
+        id: 'anusuhu-sedid-part1',
+        title: 'አኑስሁ ሰዲድ part 1',
+        description: 'የአኑስሁ ሰዲድ part 1 ደርስ ስብስቦች',
+        files: ANUSUHU_SEDID_PART1_FILES,
+    },
+    {
+        id: 'anusuhu-sedid-part2',
+        title: 'አኑስሁ ሰዲድ part 2',
+        description: 'የአኑስሁ ሰዲድ part 2 ደርስ ስብስቦች',
+        files: ANUSUHU_SEDID_PART2_FILES,
     },
 
 
