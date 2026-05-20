@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useAudioPlayerStatus } from 'expo-audio';
 import React from 'react';
 import { ActivityIndicator, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { DriveFile } from '../types';
@@ -19,9 +20,65 @@ interface FileListItemProps {
     isPlaying?: boolean;
     isCurrent?: boolean;
     isAudioLoading?: boolean;
-    position?: number;
-    duration?: number;
 }
+
+interface FileListItemProgressProps {
+    player: any;
+    onSeek?: (value: number) => void;
+}
+
+const FileListItemProgress: React.FC<FileListItemProgressProps> = ({ player, onSeek }) => {
+    const status = useAudioPlayerStatus(player);
+    const position = (typeof status.currentTime === 'number' && !isNaN(status.currentTime)) ? status.currentTime * 1000 : 0;
+    const duration = (typeof status.duration === 'number' && !isNaN(status.duration)) ? status.duration * 1000 : 0;
+
+    const formatTime = (millis: number) => {
+        const totalSeconds = Math.max(0, Math.floor((millis || 0) / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
+
+    return (
+        <View style={styles.progressContainer}>
+            <View style={styles.controlsRow}>
+                <TouchableOpacity
+                    onPress={() => onSeek && onSeek(Math.max(0, position - 10000))}
+                    style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                >
+                    <Ionicons name="refresh" size={18} color="#fff" />
+                    <Text style={[styles.controlText, { color: '#fff' }]}>-10s</Text>
+                </TouchableOpacity>
+
+                <View style={{ flex: 1, marginHorizontal: 12 }}>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={duration > 0 ? duration : 100}
+                        disabled={duration === 0}
+                        value={position}
+                        onSlidingComplete={onSeek}
+                        minimumTrackTintColor="#4ade80" // Bright green accent
+                        maximumTrackTintColor="rgba(255,255,255,0.3)"
+                        thumbTintColor="#4ade80"
+                    />
+                    <View style={styles.timeLabels}>
+                        <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{formatTime(position)}</Text>
+                        <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{duration > 0 ? formatTime(duration) : '--:--'}</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    onPress={() => onSeek && onSeek(duration > 0 ? Math.min(duration, position + 10000) : position + 10000)}
+                    style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+                >
+                    <Ionicons name="refresh" size={18} color="#fff" style={{ transform: [{ scaleX: -1 }] }} />
+                    <Text style={[styles.controlText, { color: '#fff' }]}>+10s</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
 
 export const FileListItem: React.FC<FileListItemProps> = ({
     file,
@@ -31,15 +88,13 @@ export const FileListItem: React.FC<FileListItemProps> = ({
     onAddNote,
     isPlaying,
     isCurrent,
-    isAudioLoading,
-    position = 0,
-    duration = 0
+    isAudioLoading
 }) => {
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
     const { downloaded, loading, download, remove, localUri } = useFileDownloader(file.name, file.url);
     const router = useRouter();
-    const { playbackRate, setPlaybackRate } = useAudio();
+    const { player, playbackRate, setPlaybackRate } = useAudio();
 
     // Available playback speeds
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -78,13 +133,6 @@ export const FileListItem: React.FC<FileListItemProps> = ({
             // Pass the title manually using file.name and id
             onPlay(localUri, file.name, undefined, file.id);
         }
-    };
-
-    const formatTime = (millis: number) => {
-        const totalSeconds = Math.max(0, Math.floor((millis || 0) / 1000));
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     };
 
     const renderAction = () => {
@@ -168,44 +216,8 @@ export const FileListItem: React.FC<FileListItemProps> = ({
                 {renderAction()}
             </View>
 
-            {isCurrent && file.type === 'audio' && (
-                <View style={styles.progressContainer}>
-                    <View style={styles.controlsRow}>
-                        <TouchableOpacity
-                            onPress={() => onSeek && onSeek(Math.max(0, position - 10000))}
-                            style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
-                        >
-                            <Ionicons name="refresh" size={18} color="#fff" />
-                            <Text style={[styles.controlText, { color: '#fff' }]}>-10s</Text>
-                        </TouchableOpacity>
-
-                        <View style={{ flex: 1, marginHorizontal: 12 }}>
-                            <Slider
-                                style={styles.slider}
-                                minimumValue={0}
-                                maximumValue={duration > 0 ? duration : 100}
-                                disabled={duration === 0}
-                                value={position}
-                                onSlidingComplete={onSeek}
-                                minimumTrackTintColor="#4ade80" // Bright green accent
-                                maximumTrackTintColor="rgba(255,255,255,0.3)"
-                                thumbTintColor="#4ade80"
-                            />
-                            <View style={styles.timeLabels}>
-                                <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{formatTime(position)}</Text>
-                                <Text style={[styles.timeText, { color: 'rgba(255,255,255,0.8)' }]}>{duration > 0 ? formatTime(duration) : '--:--'}</Text>
-                            </View>
-                        </View>
-
-                        <TouchableOpacity
-                            onPress={() => onSeek && onSeek(duration > 0 ? Math.min(duration, position + 10000) : position + 10000)}
-                            style={[styles.controlBtn, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
-                        >
-                            <Ionicons name="refresh" size={18} color="#fff" style={{ transform: [{ scaleX: -1 }] }} />
-                            <Text style={[styles.controlText, { color: '#fff' }]}>+10s</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+            {isCurrent && file.type === 'audio' && player && (
+                <FileListItemProgress player={player} onSeek={onSeek} />
             )}
         </>
     );

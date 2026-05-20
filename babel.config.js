@@ -3,7 +3,18 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Add any plugins if needed
+      'react-native-reanimated/plugin',
+      function () {
+        return {
+          visitor: {
+            MetaProperty(path) {
+              if (path.node.meta.name === 'import' && path.node.property.name === 'meta') {
+                path.replaceWithSourceString('process');
+              }
+            },
+          },
+        };
+      },
     ],
   };
 };

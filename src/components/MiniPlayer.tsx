@@ -5,17 +5,25 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAudioPlayerStatus, type AudioPlayer } from 'expo-audio';
 import React, { useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const MiniPlayer: React.FC = () => {
+    const { player, currentUri } = useAudio();
+
+    if (!currentUri || !player) return null;
+
+    return <MiniPlayerContent player={player} />;
+};
+
+const MiniPlayerContent: React.FC<{ player: AudioPlayer }> = ({ player }) => {
     const {
         isPlaying,
         currentUri,
         currentTitle,
+        currentFileId,
         isLoading,
-        position,
-        duration,
         playbackRate,
         playSound,
         pauseSound,
@@ -26,11 +34,13 @@ export const MiniPlayer: React.FC = () => {
         setPlaybackRate,
         currentQueue
     } = useAudio();
+    
+    const status = useAudioPlayerStatus(player);
+    const position = (typeof status.currentTime === 'number' && !isNaN(status.currentTime)) ? status.currentTime * 1000 : 0;
+    const duration = (typeof status.duration === 'number' && !isNaN(status.duration)) ? status.duration * 1000 : 0;
     const colorScheme = useColorScheme() ?? 'light';
     const theme = Colors[colorScheme];
     const [showTrackList, setShowTrackList] = useState(false);
-
-    if (!currentUri) return null;
 
     // Define audioFiles for the list modal from the current queue
     const audioFiles = currentQueue.filter(file => file.type === 'audio');
@@ -55,9 +65,6 @@ export const MiniPlayer: React.FC = () => {
         }
     };
 
-    const isDark = colorScheme === 'dark';
-    const isWeb = Platform.OS === 'web';
-
     const formatTime = (millis: number) => {
         const totalSeconds = Math.max(0, Math.floor((millis || 0) / 1000));
         const minutes = Math.floor(totalSeconds / 60);
@@ -66,133 +73,164 @@ export const MiniPlayer: React.FC = () => {
     };
 
     const TEXT_COLOR = '#FFFFFF';
-    const SECONDARY_TEXT_COLOR = '#bbf7d0'; // Light green text for secondary
-    const ICON_COLOR = '#FFFFFF';
-    const ACCENT_COLOR = '#4ade80'; // Bright green
+    const SECONDARY_TEXT_COLOR = '#86efac'; // Sleek light green text
+    const ACCENT_COLOR = '#22c55e'; // Vibrant Emerald Green
+    const GLOW_COLOR = '#4ade80';
 
     return (
         <View style={styles.outerContainer}>
             <BlurView
-                intensity={90}
+                intensity={95}
                 tint="dark"
-                style={[styles.container]}
+                style={styles.container}
             >
-                {/* Premium Black-Green Gradient Background */}
+                {/* Premium Deep Midnight & Emerald Gradient Background */}
                 <LinearGradient
-                    colors={['#020617', '#14532d', '#020617']}
+                    colors={['rgba(2, 6, 23, 0.95)', 'rgba(6, 78, 59, 0.75)', 'rgba(2, 6, 23, 0.95)']}
                     start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFill}
                 />
 
-                {/* Decorative Pattern / Shine */}
+                {/* Elegant Ambient Glowing Mesh Overlay */}
                 <LinearGradient
-                    colors={['transparent', 'rgba(74, 222, 128, 0.05)', 'transparent']}
+                    colors={['transparent', 'rgba(34, 197, 94, 0.1)', 'transparent']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={[StyleSheet.absoluteFill, { transform: [{ skewX: '-20deg' }] }]}
+                    style={[StyleSheet.absoluteFill, { transform: [{ skewX: '-15deg' }] }]}
                 />
 
+                {/* Main Content Info & Core Controls */}
                 <View style={styles.header}>
                     <View style={styles.titleInfo}>
-                        <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                        <View style={styles.iconBox}>
+                            <LinearGradient
+                                colors={['#22c55e', '#15803d']}
+                                style={StyleSheet.absoluteFill}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            />
                             <Ionicons
-                                name="musical-note"
-                                size={20}
-                                color={ACCENT_COLOR}
+                                name="musical-notes"
+                                size={18}
+                                color="#FFFFFF"
                             />
                         </View>
-                        <Text style={[styles.title, { color: TEXT_COLOR }]} numberOfLines={1}>
-                            {trackName}
-                        </Text>
+                        <View style={styles.textContainer}>
+                            <Text style={styles.title} numberOfLines={1}>
+                                {trackName}
+                            </Text>
+                            <Text style={styles.subtitle}>
+                                {isPlaying ? 'Playing Audio Lesson' : 'Paused'}
+                            </Text>
+                        </View>
                     </View>
+
                     <View style={styles.headerButtons}>
                         <TouchableOpacity
                             onPress={handleSpeedCycle}
-                            style={[styles.speedBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
+                            style={styles.speedBtn}
+                            activeOpacity={0.7}
                         >
-                            <Text style={[styles.speedText, { color: ACCENT_COLOR }]}>
+                            <Text style={styles.speedText}>
                                 {playbackRate}x
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => setShowTrackList(true)}
-                            style={[styles.iconBtn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
+                            style={styles.iconBtn}
+                            activeOpacity={0.7}
                         >
-                            <Ionicons name="list" size={24} color={TEXT_COLOR} />
+                            <Ionicons name="list" size={20} color={TEXT_COLOR} />
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handlePlayPause}
-                            style={[styles.playBtn, { backgroundColor: ACCENT_COLOR, shadowColor: ACCENT_COLOR }]}
+                            style={styles.playBtn}
+                            activeOpacity={0.8}
                         >
+                            <LinearGradient
+                                colors={[GLOW_COLOR, '#15803d']}
+                                style={StyleSheet.absoluteFill}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                            />
                             {isLoading ? (
-                                <ActivityIndicator color="#000" size="small" />
+                                <ActivityIndicator color="#FFFFFF" size="small" />
                             ) : (
                                 <Ionicons
                                     name={isPlaying ? "pause" : "play"}
-                                    size={28}
-                                    color="#020617"
+                                    size={24}
+                                    color="#FFFFFF"
+                                    style={!isPlaying ? { marginLeft: 2 } : {}}
                                 />
                             )}
                         </TouchableOpacity>
                     </View>
                 </View>
 
+                {/* Timeline / Progress Section */}
+                <View style={styles.sliderSection}>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={duration > 0 ? duration : 100}
+                        disabled={duration === 0}
+                        value={position}
+                        onSlidingComplete={seekScroll}
+                        minimumTrackTintColor={GLOW_COLOR}
+                        maximumTrackTintColor={'rgba(255, 255, 255, 0.15)'}
+                        thumbTintColor={GLOW_COLOR}
+                    />
+                    <View style={styles.timeLabelContainer}>
+                        <Text style={styles.timeLabel}>
+                            {formatTime(position)}
+                        </Text>
+                        <Text style={styles.timeLabel}>
+                            {duration > 0 ? formatTime(duration) : '--:--'}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Playback Control Buttons (Skip, Skip 10s) */}
                 <View style={styles.controlsRow}>
                     <TouchableOpacity
                         onPress={previousTrack}
-                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="play-skip-back" size={28} color={ACCENT_COLOR} />
+                        <Ionicons name="play-skip-back" size={22} color={GLOW_COLOR} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={() => skip(-10)}
-                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
-                        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                        style={styles.seekBtn}
+                        hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="refresh" size={20} color={SECONDARY_TEXT_COLOR} />
-                        <Text style={[styles.skipText, { color: SECONDARY_TEXT_COLOR }]}>-10s</Text>
+                        <Ionicons name="play-back" size={16} color={SECONDARY_TEXT_COLOR} />
+                        <Text style={[styles.seekText, { marginTop: -2 }]}>-10s</Text>
                     </TouchableOpacity>
 
-                    <View style={{ flex: 1, marginHorizontal: 4 }}>
-                        <Slider
-                            style={styles.slider}
-                            minimumValue={0}
-                            maximumValue={duration > 0 ? duration : 100}
-                            disabled={duration === 0}
-                            value={position}
-                            onSlidingComplete={seekScroll}
-                            minimumTrackTintColor={ACCENT_COLOR}
-                            maximumTrackTintColor={'rgba(255,255,255,0.2)'}
-                            thumbTintColor={ACCENT_COLOR}
-                        />
-                        <View style={styles.timeLabelContainer}>
-                            <Text style={[styles.timeLabel, { color: SECONDARY_TEXT_COLOR }]}>
-                                {formatTime(position)}
-                            </Text>
-                            <Text style={[styles.timeLabel, { color: SECONDARY_TEXT_COLOR }]}>
-                                {duration > 0 ? formatTime(duration) : '--:--'}
-                            </Text>
-                        </View>
-                    </View>
+                    <View style={styles.centerFiller} />
 
                     <TouchableOpacity
                         onPress={() => skip(10)}
-                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
-                        hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                        style={styles.seekBtn}
+                        hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="refresh" size={20} color={SECONDARY_TEXT_COLOR} style={{ transform: [{ scaleX: -1 }] }} />
-                        <Text style={[styles.skipText, { color: SECONDARY_TEXT_COLOR }]}>+10s</Text>
+                        <Ionicons name="play-forward" size={16} color={SECONDARY_TEXT_COLOR} />
+                        <Text style={[styles.seekText, { marginTop: -2 }]}>+10s</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={nextTrack}
-                        style={[styles.skipBtn, { backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.skipBtn}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="play-skip-forward" size={28} color={ACCENT_COLOR} />
+                        <Ionicons name="play-skip-forward" size={22} color={GLOW_COLOR} />
                     </TouchableOpacity>
                 </View>
             </BlurView>
@@ -204,14 +242,16 @@ export const MiniPlayer: React.FC = () => {
                 onRequestClose={() => setShowTrackList(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+                    <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                    <View style={[styles.modalContent, { backgroundColor: '#0f172a' }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>Queue</Text>
+                            <Text style={[styles.modalTitle, { color: '#f8fafc' }]}>Course Queue</Text>
                             <TouchableOpacity
                                 onPress={() => setShowTrackList(false)}
-                                style={[styles.closeIcon, { backgroundColor: theme.border + '50' }]}
+                                style={styles.closeIcon}
+                                activeOpacity={0.7}
                             >
-                                <Ionicons name="close" size={24} color={theme.text} />
+                                <Ionicons name="close" size={22} color="#f8fafc" />
                             </TouchableOpacity>
                         </View>
                         <FlatList
@@ -223,8 +263,8 @@ export const MiniPlayer: React.FC = () => {
                                     style={[
                                         styles.trackItem,
                                         {
-                                            backgroundColor: item.url === currentUri ? theme.tint + '10' : 'transparent',
-                                            borderColor: item.url === currentUri ? theme.tint + '30' : 'transparent'
+                                            backgroundColor: item.id === currentFileId ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.02)',
+                                            borderColor: item.id === currentFileId ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255,255,255,0.05)'
                                         }
                                     ]}
                                     onPress={async () => {
@@ -243,17 +283,18 @@ export const MiniPlayer: React.FC = () => {
                                         setShowTrackList(false);
                                     }}
                                 >
-                                    <Ionicons
-                                        name={item.url === currentUri ? "volume-high" : "musical-note-outline"}
-                                        size={18}
-                                        color={item.url === currentUri ? theme.tint : theme.secondaryText}
-                                        style={{ marginRight: 12 }}
-                                    />
+                                    <View style={[styles.trackStatusIcon, { backgroundColor: item.id === currentFileId ? '#22c55e' : 'rgba(255,255,255,0.08)' }]}>
+                                        <Ionicons
+                                            name={item.id === currentFileId ? "volume-high" : "musical-note"}
+                                            size={16}
+                                            color={item.id === currentFileId ? '#FFFFFF' : '#94a3b8'}
+                                        />
+                                    </View>
                                     <Text style={[
                                         styles.trackName,
                                         {
-                                            color: item.url === currentUri ? theme.tint : theme.text,
-                                            fontWeight: item.url === currentUri ? '700' : '500'
+                                            color: item.id === currentFileId ? '#4ade80' : '#f8fafc',
+                                            fontWeight: item.id === currentFileId ? '700' : '500'
                                         }
                                     ]} numberOfLines={1}>
                                         {item.name}
@@ -271,29 +312,29 @@ export const MiniPlayer: React.FC = () => {
 const styles = StyleSheet.create({
     outerContainer: {
         position: 'absolute',
-        bottom: 52, // Height of the TabBar roughly
-        left: 0,
-        right: 0,
-        elevation: 25,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -12 },
-        shadowOpacity: 0.25,
-        shadowRadius: 24,
+        bottom: 74, // Suspends floating player beautifully above navigation bar
+        left: 14,
+        right: 14,
+        elevation: 20,
+        shadowColor: '#10b981', // Glowing emerald shadow
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 18,
     },
     container: {
-        paddingTop: 18,
-        paddingBottom: 28,
-        paddingHorizontal: 20,
-        borderTopLeftRadius: 36,
-        borderTopRightRadius: 36,
-        borderTopWidth: 1.5,
+        paddingTop: 16,
+        paddingBottom: 16,
+        paddingHorizontal: 18,
+        borderRadius: 24, // Sleek floating capsule
+        borderWidth: 1.5,
+        borderColor: 'rgba(74, 222, 128, 0.15)', // Highly attractive glowing borders
         overflow: 'hidden',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: 12,
     },
     titleInfo: {
         flex: 1,
@@ -302,127 +343,176 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     iconBox: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
+        width: 40,
+        height: 40,
+        borderRadius: 20, // Circular album art style
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    textContainer: {
+        flex: 1,
     },
     title: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '800',
-        letterSpacing: -0.6,
+        color: '#FFFFFF',
+        letterSpacing: -0.4,
+    },
+    subtitle: {
+        fontSize: 11,
+        color: '#86efac',
+        marginTop: 2,
+        fontWeight: '500',
     },
     headerButtons: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
+        gap: 10,
     },
     iconBtn: {
-        width: 42,
-        height: 42,
+        width: 36,
+        height: 36,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 21,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     playBtn: {
-        width: 52,
-        height: 52,
+        width: 44,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 26,
-        elevation: 10,
-        shadowColor: '#2563EB',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.4,
-        shadowRadius: 10,
+        borderRadius: 22,
+        overflow: 'hidden',
+        elevation: 8,
+        shadowColor: '#10b981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+    },
+    sliderSection: {
+        marginBottom: 10,
+    },
+    slider: {
+        height: 24,
+        marginHorizontal: -8, // Align slider better
+    },
+    timeLabelContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: -4,
+        paddingHorizontal: 2,
+    },
+    timeLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#86efac',
+        letterSpacing: 0.5,
     },
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 4,
     },
-    slider: {
-        height: 32,
+    centerFiller: {
+        flex: 1,
     },
     skipBtn: {
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 24,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
-    skipText: {
-        fontSize: 9,
-        fontWeight: '700',
-        marginTop: -4,
+    seekBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    seekText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: '#86efac',
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        backgroundColor: 'rgba(2, 6, 23, 0.8)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        height: '75%',
-        borderTopLeftRadius: 36,
-        borderTopRightRadius: 36,
+        height: '70%',
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
         padding: 24,
-        elevation: 30,
+        borderTopWidth: 1.5,
+        borderColor: 'rgba(74, 222, 128, 0.15)',
+        elevation: 25,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 20,
     },
     modalTitle: {
-        fontSize: 26,
+        fontSize: 22,
         fontWeight: '900',
-        letterSpacing: -1.2,
+        letterSpacing: -0.8,
     },
     closeIcon: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     trackItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 18,
-        borderRadius: 20,
-        marginBottom: 10,
-        borderWidth: 1.5,
+        padding: 14,
+        borderRadius: 16,
+        marginBottom: 8,
+        borderWidth: 1,
     },
-    trackName: {
-        fontSize: 16,
-        flex: 1,
-        letterSpacing: -0.3,
-    },
-    speedBtn: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 14,
-        minWidth: 50, // Added more width as requested
+    trackStatusIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 12,
+    },
+    trackName: {
+        fontSize: 14,
+        flex: 1,
+        letterSpacing: -0.2,
+    },
+    speedBtn: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     speedText: {
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: '900',
-    },
-    timeLabelContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: -8,
-        paddingHorizontal: 2,
-    },
-    timeLabel: {
-        fontSize: 10,
-        fontWeight: '700',
-        letterSpacing: 0.5,
+        color: '#4ade80',
     },
 });

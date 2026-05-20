@@ -7,9 +7,9 @@ import 'react-native-reanimated';
 
 import { MiniPlayer } from '../src/components/MiniPlayer';
 
-import { useColorScheme } from '../hooks/use-color-scheme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AudioProvider } from '../src/context/AudioContext';
-import { ThemeProvider as AppThemeProvider } from '../src/context/ThemeContext';
+import { ThemeProvider as AppThemeProvider } from '@/src/context/ThemeContext';
 
 import { NoteProvider } from '../src/context/NoteContext';
 import { UserProvider } from '../src/context/UserContext';

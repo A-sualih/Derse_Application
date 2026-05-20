@@ -1,31 +1,27 @@
-import { MMKV } from 'react-native-mmkv';
-
-// Professional Native Storage using MMKV
-export const storage = new MMKV();
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const mmkvStorage = {
-    setItem: (key: string, value: string) => {
-        storage.set(key, value);
+    setItem: async (key: string, value: string) => {
+        await AsyncStorage.setItem(key, value);
     },
-    getItem: (key: string) => {
-        const value = storage.getString(key);
-        return value ?? null;
+    getItem: async (key: string) => {
+        return await AsyncStorage.getItem(key);
     },
-    removeItem: (key: string) => {
-        storage.delete(key);
+    removeItem: async (key: string) => {
+        await AsyncStorage.removeItem(key);
     },
-    clear: () => {
-        storage.clearAll();
+    clear: async () => {
+        await AsyncStorage.clear();
     },
 };
 
 // Typed storage helpers
-export const setAppObject = (key: string, value: any) => {
-    storage.set(key, JSON.stringify(value));
+export const setAppObject = async (key: string, value: any) => {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
 };
 
-export const getAppObject = <T>(key: string): T | null => {
-    const value = storage.getString(key);
+export const getAppObject = async <T>(key: string): Promise<T | null> => {
+    const value = await AsyncStorage.getItem(key);
     if (!value) return null;
     try {
         return JSON.parse(value) as T;

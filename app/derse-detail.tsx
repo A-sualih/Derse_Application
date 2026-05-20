@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DerseDetailScreen() {
@@ -16,6 +16,8 @@ export default function DerseDetailScreen() {
     const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
     const { addNote } = useNotes();
     const [noteFile, setNoteFile] = useState<DriveFile | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     // Fixed dark theme colors for consistency with new design
     const theme = {
@@ -28,6 +30,14 @@ export default function DerseDetailScreen() {
 
     const category = CATEGORIES.find(c => c.id === categoryId);
 
+    const filteredFiles = React.useMemo(() => {
+        if (!category) return [];
+        if (!searchQuery.trim()) return category.files;
+        return category.files.filter(file =>
+            file.name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [category, searchQuery]);
+
     const {
         playSound,
         pauseSound,
@@ -36,8 +46,6 @@ export default function DerseDetailScreen() {
         currentUri,
         currentFileId,
         isLoading,
-        position,
-        duration,
     } = useAudioPlayer();
 
     if (!category) {
@@ -78,19 +86,59 @@ export default function DerseDetailScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
                 <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.05)' }]}>
                     <View style={styles.headerContent}>
-                        <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                            <Ionicons name="arrow-back" size={24} color={theme.text} />
-                        </TouchableOpacity>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>{category.title}</Text>
-                            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '500' }}>
-                                {category.files.length} Files Available
-                            </Text>
-                        </View>
+                        {isSearching ? (
+                            <View style={styles.searchContainer}>
+                                <TouchableOpacity 
+                                    onPress={() => { setIsSearching(false); setSearchQuery(''); }}
+                                    style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="arrow-back" size={22} color={theme.text} />
+                                </TouchableOpacity>
+                                <View style={styles.inputWrapper}>
+                                    <TextInput
+                                        style={[styles.searchInput, { color: theme.text }]}
+                                        placeholder="Search lessons..."
+                                        placeholderTextColor="rgba(255,255,255,0.35)"
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        autoFocus
+                                    />
+                                    {searchQuery.length > 0 && (
+                                        <TouchableOpacity 
+                                            onPress={() => setSearchQuery('')}
+                                            style={styles.clearButton}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+                        ) : (
+                            <>
+                                <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                                    <Ionicons name="arrow-back" size={24} color={theme.text} />
+                                </TouchableOpacity>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>{category.title}</Text>
+                                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '500' }}>
+                                        {category.files.length} Files Available
+                                    </Text>
+                                </View>
+                                <TouchableOpacity 
+                                    onPress={() => setIsSearching(true)} 
+                                    style={[styles.searchToggleButton, { backgroundColor: 'rgba(255,255,255,0.05)' }]}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="search" size={20} color={theme.text} />
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 </View>
                 <FlatList
-                    data={category.files}
+                    data={filteredFiles}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => {
                         const isItemCurrent = currentFileId === item.id;
@@ -103,12 +151,18 @@ export default function DerseDetailScreen() {
                                 isPlaying={isPlaying}
                                 isCurrent={isItemCurrent}
                                 isAudioLoading={isLoading}
-                                position={isItemCurrent ? position : 0}
-                                duration={isItemCurrent ? duration : 0}
                                 onAddNote={(file) => setNoteFile(file)}
                             />
                         );
                     }}
+                    ListEmptyComponent={
+                        searchQuery.trim() !== '' ? (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="search-outline" size={48} color="rgba(255,255,255,0.15)" />
+                                <Text style={styles.emptyText}>No lessons found matching "{searchQuery}"</Text>
+                            </View>
+                        ) : null
+                    }
                     contentContainerStyle={styles.listContent}
                 />
             </SafeAreaView>
@@ -157,5 +211,48 @@ const styles = StyleSheet.create({
     listContent: {
         paddingVertical: 10,
         paddingBottom: 120, // More space for MiniPlayer
+    },
+    searchContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    inputWrapper: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(56, 189, 248, 0.25)', // Smooth light blue glass border
+        paddingHorizontal: 14,
+    },
+    searchInput: {
+        flex: 1,
+        height: '100%',
+        fontSize: 15,
+        fontWeight: '500',
+        paddingRight: 8,
+    },
+    clearButton: {
+        padding: 4,
+    },
+    searchToggleButton: {
+        padding: 10,
+        borderRadius: 14,
+    },
+    emptyContainer: {
+        paddingTop: 80,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 30,
+    },
+    emptyText: {
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+        marginTop: 12,
+        textAlign: 'center',
+        fontWeight: '500',
     },
 });

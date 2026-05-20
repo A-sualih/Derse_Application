@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useMediaPlayerStore } from '../store/mediaPlayerStore';
+import { useAppStore } from '../store/appStore';
 
 const { width } = Dimensions.get('window');
 
@@ -16,8 +17,9 @@ interface ProfessionalPlayerProps {
 
 export const ProfessionalPlayer = React.memo(({ source, title, onClose }: ProfessionalPlayerProps) => {
     const store = useMediaPlayerStore();
+    const isAppActive = useAppStore(state => state.isAppActive);
     const [isControlsVisible, setIsControlsVisible] = useState(true);
-    const controlsTimer = useRef<NodeJS.Timeout | null>(null);
+    const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Initialize Video Player
     const player = useVideoPlayer(source, (player) => {
@@ -46,10 +48,10 @@ export const ProfessionalPlayer = React.memo(({ source, title, onClose }: Profes
 
     // Handle background behavior
     useEffect(() => {
-        if (!store.isAppActive && player.playing) {
+        if (!isAppActive && player.playing) {
             // App is backgrounded, keep playing if desired or pause
         }
-    }, [store.isAppActive]);
+    }, [isAppActive]);
 
     const toggleControls = useCallback(() => {
         setIsControlsVisible(prev => !prev);
@@ -89,7 +91,6 @@ export const ProfessionalPlayer = React.memo(({ source, title, onClose }: Profes
                 <VideoView 
                     player={player} 
                     style={styles.video} 
-                    contentMode="contain"
                     allowsFullscreen
                     allowsPictureInPicture
                 />
@@ -142,7 +143,7 @@ export const ProfessionalPlayer = React.memo(({ source, title, onClose }: Profes
                                 minimumValue={0}
                                 maximumValue={player.duration}
                                 value={player.currentTime}
-                                onSlidingComplete={(value) => player.seekTo(value)}
+                                onSlidingComplete={(value) => { player.currentTime = value; }}
                                 minimumTrackTintColor="#4ade80"
                                 maximumTrackTintColor="rgba(255,255,255,0.3)"
                                 thumbTintColor="#4ade80"

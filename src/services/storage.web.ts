@@ -5,28 +5,28 @@
 const mockMap = new Map<string, string>();
 
 export const storage = {
-    set: (key: string, value: string | boolean | number | Uint8Array) => {
+    set: async (key: string, value: string | boolean | number | Uint8Array) => {
         try {
             localStorage.setItem(key, String(value));
         } catch (e) {
             mockMap.set(key, String(value));
         }
     },
-    getString: (key: string) => {
+    getString: async (key: string) => {
         try {
             return localStorage.getItem(key);
         } catch (e) {
-            return mockMap.get(key);
+            return mockMap.get(key) || null;
         }
     },
-    delete: (key: string) => {
+    delete: async (key: string) => {
         try {
             localStorage.removeItem(key);
         } catch (e) {
             mockMap.delete(key);
         }
     },
-    clearAll: () => {
+    clearAll: async () => {
         try {
             localStorage.clear();
         } catch (e) {
@@ -36,27 +36,27 @@ export const storage = {
 } as any;
 
 export const mmkvStorage = {
-    setItem: (key: string, value: string) => {
-        storage.set(key, value);
+    setItem: async (key: string, value: string) => {
+        await storage.set(key, value);
     },
-    getItem: (key: string) => {
-        const value = storage.getString(key);
+    getItem: async (key: string) => {
+        const value = await storage.getString(key);
         return value ?? null;
     },
-    removeItem: (key: string) => {
-        storage.delete(key);
+    removeItem: async (key: string) => {
+        await storage.delete(key);
     },
-    clear: () => {
-        storage.clearAll();
+    clear: async () => {
+        await storage.clearAll();
     },
 };
 
-export const setAppObject = (key: string, value: any) => {
-    storage.set(key, JSON.stringify(value));
+export const setAppObject = async (key: string, value: any) => {
+    await storage.set(key, JSON.stringify(value));
 };
 
-export const getAppObject = <T>(key: string): T | null => {
-    const value = storage.getString(key);
+export const getAppObject = async <T>(key: string): Promise<T | null> => {
+    const value = await storage.getString(key);
     if (!value) return null;
     try {
         return JSON.parse(value) as T;

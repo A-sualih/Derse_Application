@@ -11,7 +11,9 @@ class BackgroundTaskManager {
     private initialized = false;
 
     constructor() {
-        this.loadTasks();
+        if (typeof window !== 'undefined') {
+            this.loadTasks();
+        }
     }
 
     on(event: 'update', listener: Listener) {
